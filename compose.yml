@@ -21,7 +21,7 @@ services:
       start_period: 15s
 
   pihole:
-    image: pihole/pihole:2025.08.0
+    image: pihole/pihole:2026.02.0
     container_name: pihole
     hostname: pihole
     # Ensure Unbound is healthy before DNS service starts

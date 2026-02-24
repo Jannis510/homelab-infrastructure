@@ -114,7 +114,7 @@ services:
       - traefik.http.routers.traefik.middlewares=traefik-auth
 
   stepca:
-    image: smallstep/step-ca:0.29.0
+    image: smallstep/step-ca:0.30.0-rc2
     container_name: stepca
     # Internal ACME CA (no published ports)
     networks:

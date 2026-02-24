@@ -138,7 +138,7 @@ services:
       - "pihole.home.arpa:host-gateway"
 
   stepca-export:
-    image: curlimages/curl:8.6.0
+    image: curlimages/curl:8.18.0
     # One-shot job to export Root CA bundle after initialization
     depends_on:
       - stepca

@@ -37,9 +37,14 @@ jobs:
 
       - name: Trivy filesystem scan (SARIF)
         run: |
+          set -euo pipefail
           mkdir -p trivy-results
-          docker run --rm -v "$PWD:/work" aquasec/trivy:0.50.2 \
+          docker run --rm \
+            -v "$PWD:/work" -w /work \
+            -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+            aquasec/trivy:0.69.1 \
             fs --severity CRITICAL,HIGH --exit-code 1 \
+            --ignorefile /work/.trivyignore \
             --format sarif --output /work/trivy-results/trivy-fs.sarif /work
 
       - name: Upload FS SARIF
@@ -64,6 +69,7 @@ jobs:
 
       - name: Pull images from compose
         run: |
+          set -euo pipefail
           docker compose --env-file .env.ci -f compose.yml pull
 
       - name: Trivy image scan (SARIF per image)
@@ -74,8 +80,12 @@ jobs:
           for img in $IMAGES; do
             echo "Scanning $img"
             SAFE_NAME=$(echo "$img" | tr '/:@' '___')
-            docker run --rm -v "$PWD:/work" aquasec/trivy:0.50.2 \
+            docker run --rm \
+              -v "$PWD:/work" -w /work \
+              -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+              aquasec/trivy:0.69.1 \
               image --severity CRITICAL,HIGH --exit-code 1 \
+              --ignorefile /work/.trivyignore \
               --format sarif --output "/work/trivy-results/images/${SAFE_NAME}.sarif" "$img"
           done
 

@@ -1,27 +1,27 @@
 name: home-server
 services:
   unbound:
-    image: mvance/unbound:1.19.3
+    image: madnuttah/unbound:1.24.2-1
     container_name: unbound
     # Internal recursive resolver (no public port exposure)
     networks:
       - dns_net
     volumes:
-      - ./config/unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
-      - unbound:/opt/unbound/etc/unbound/var
+      - ./config/unbound/unbound.conf:/usr/local/unbound/etc/unbound/unbound.conf:ro
+      - unbound:/usr/local/unbound/etc/unbound/var
     restart: unless-stopped
     # Exposed only inside dns_net (not published to host)
     expose:
       - "5335"
     healthcheck:
-      test: ["CMD-SHELL", "drill @127.0.0.1 -p 5335 example.com || exit 1"]
+      test: /usr/local/unbound/sbin/healthcheck.sh
       interval: 30s
       timeout: 5s
       retries: 5
-
+      start_period: 15s
 
   pihole:
-    image: pihole/pihole:2025.08.0
+    image: pihole/pihole:2026.02.0
     container_name: pihole
     hostname: pihole
     # Ensure Unbound is healthy before DNS service starts
@@ -114,7 +114,7 @@ services:
       - traefik.http.routers.traefik.middlewares=traefik-auth
 
   stepca:
-    image: smallstep/step-ca:0.26.1
+    image: smallstep/step-ca:0.30.0-rc2
     container_name: stepca
     # Internal ACME CA (no published ports)
     networks:
@@ -138,7 +138,7 @@ services:
       - "pihole.home.arpa:host-gateway"
 
   stepca-export:
-    image: curlimages/curl:8.6.0
+    image: alpine:3.21
     # One-shot job to export Root CA bundle after initialization
     depends_on:
       - stepca
@@ -149,7 +149,7 @@ services:
       - ./config/stepca/export-roots.sh:/usr/local/bin/export-roots.sh:ro
     entrypoint: ["/bin/sh", "-lc"]
     command: ["sh /usr/local/bin/export-roots.sh"]
-    restart: "no" # run once and exit
+    restart: "no"  # run once and exit
 
 networks:
   dns_net:

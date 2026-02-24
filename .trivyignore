@@ -1,0 +1,12 @@
+# smallstep/step-ca - upstream fix pending
+# OpenSSL 3.5.5-r0 not yet included in step-ca image
+CVE-2025-15467
+CVE-2025-69419
+CVE-2025-69421
+# Go stdlib - fixed in 1.25.7, awaiting new step-ca release
+CVE-2025-68121
+CVE-2025-61726
+CVE-2025-61728
+CVE-2025-61730
+# nebula - fixed in 1.10.3, awaiting new step-ca release
+CVE-2026-25793

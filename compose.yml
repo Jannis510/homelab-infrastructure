@@ -1,7 +1,7 @@
 name: home-server
 services:
   unbound:
-    image: mvance/unbound:1.19.3
+    image: mvance/unbound:1.21.1
     container_name: unbound
     # Internal recursive resolver (no public port exposure)
     networks:

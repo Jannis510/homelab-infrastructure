@@ -149,7 +149,7 @@ services:
       - ./config/stepca/export-roots.sh:/usr/local/bin/export-roots.sh:ro
     entrypoint: ["/bin/sh", "-lc"]
     command: ["sh /usr/local/bin/export-roots.sh"]
-    restart: "no" # run once and exit
+    restart: "no"  # run once and exit
 
 networks:
   dns_net:

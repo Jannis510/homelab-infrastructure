@@ -74,7 +74,7 @@ jobs:
           for img in $IMAGES; do
             echo "Scanning $img"
             SAFE_NAME=$(echo "$img" | tr '/:@' '___')
-            docker run --rm -v "$PWD:/work" aquasec/trivy:0.50.2 \
+            docker run --rm -v "$PWD:/work" aquasec/trivy:0.69.1 \
               image --severity CRITICAL,HIGH --exit-code 1 \
               --format sarif --output "/work/trivy-results/images/${SAFE_NAME}.sarif" "$img"
           done

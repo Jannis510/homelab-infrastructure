@@ -17,7 +17,7 @@ echo "waiting for stepca..."
 
 i=0
 while [ $i -lt 60 ]; do
-  if curl -sk "$CA_HEALTH" >/dev/null 2>&1; then
+  if wget -q --no-check-certificate -O /dev/null "$CA_HEALTH" 2>/dev/null; then
     break
   fi
   i=$((i+1))
@@ -30,7 +30,7 @@ if [ $i -eq 60 ]; then
 fi
 
 echo "exporting roots..."
-curl -skf "$CA_ROOTS" -o "$OUT_ROOTS"
+wget -q --no-check-certificate -O "$OUT_ROOTS" "$CA_ROOTS"
 
 # Derive root_ca.crt from roots.pem (same PEM bundle; exported for client trust convenience)
 cp "$OUT_ROOTS" "$OUT_ROOTCRT"

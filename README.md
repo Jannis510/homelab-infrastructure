@@ -21,21 +21,21 @@ External access is intended exclusively via VPN; no direct public exposure is re
 
 ## Table of Contents
 
-* 📦 [Overview](#-overview)
-* 🏗️ [Architecture](#-architecture)
-* ⚙️ [Prerequisites](#-prerequisites)
-* 🚀 [Quick Start](#-quick-start)
-* 🔧 [Configuration](#-configuration)
-* 🛠️ [Operations](#-operations)
-* 🔐 [CI/CD and Security](#-cicd-and-security)
-* 📖 [Documentation](#-documentation)
-* 🔐 [Security Considerations](#-security-considerations)
-* 🩺 [Troubleshooting](#-troubleshooting)
-* 📄 [License](#-license)
-
+*  [Overview](#overview)
+*  [Architecture](#architecture)
+*  [Prerequisites](#prerequisites)
+*  [Quick Start](#quick-start)
+*  [Configuration](#configuration)
+* ️[Operations](#operations)
+*  [CI/CD and Security](#cicd-and-security)
+*  [Documentation](#documentation)
+*  [Security Considerations](#security-considerations)
+*  [Troubleshooting](#troubleshooting)
+*  [License](#license)
+*  [Disclaimer](#disclaimer)
 ---
 
-## 📦 Overview
+## Overview
 
 This repository provides a production-inspired infrastructure stack
 for a private home lab operating within a LAN environment.
@@ -59,7 +59,7 @@ The stack emphasizes:
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 This section describes traffic flow, network boundaries, service exposure, and trust zones of the stack.
 
@@ -214,7 +214,7 @@ No container is directly exposed except through defined ingress paths (DNS and H
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 The following requirements must be met before deploying the stack.
 
@@ -258,7 +258,7 @@ The architecture is not hardware-bound and is expected to run on any Linux host 
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 The following steps initialize and start the infrastructure stack.
 
@@ -385,7 +385,7 @@ After installation, verify that the following endpoints are trusted without cert
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 Configuration is environment-driven and fully version-controlled.  
 The stack is configured through a small set of files with clear ownership.
@@ -439,7 +439,7 @@ Ensure LAN/VPN clients use Pi-hole as their DNS server so the names resolve cons
 
 ---
 
-## 🛠️ Operations
+## Operations
 
 Operational and maintenance commands for the stack (including volumes and reset procedures).
 
@@ -601,7 +601,7 @@ Only use this if you are certain that no important volumes are required anymore.
 
 ---
 
-## 🔐 CI/CD and Security
+## CI/CD and Security
 
 This repository uses GitHub Actions to validate changes and enforce baseline security controls.
 The goal is to prevent broken Compose configurations, catch common scripting issues early, and continuously scan for known vulnerabilities.
@@ -644,9 +644,24 @@ Findings should be triaged and addressed by:
 * adjusting configuration
 * documenting accepted risk where appropriate
 
+
+#### Accepted Risk / Trivy Ignore Policy
+
+Some Trivy findings may be intentionally ignored when no upstream fix is available yet (e.g., pending image rebuilds).
+All exceptions are tracked and justified in:
+
+- [`docs/security-exceptions.md`](docs/security-exceptions.md)
+
+The ignore list is maintained in:
+
+- [`.trivyignore`](.trivyignore)
+
+Exceptions must be re-reviewed whenever upstream images are updated or a related fix becomes available.
+
+
 ---
 
-## 📖 Documentation
+## Documentation
 
 Additional documentation is located under the `docs/` directory.
 
@@ -660,7 +675,7 @@ Future extensions:
 
 ---
 
-## 🔐 Security Considerations
+## Security Considerations
 
 This stack follows a minimal-exposure, LAN-only security model with explicit trust boundaries and controlled ingress.
 
@@ -767,7 +782,7 @@ Ensure:
 
 Note: Compromise of step-ca private keys requires complete CA rotation and client trust reinstallation.
 
-## 🩺 Troubleshooting
+## Troubleshooting
 
 Common issues and diagnostic steps.
 
@@ -863,7 +878,7 @@ If systemd-resolved is active, either:
 - Disable it, or
 - Reconfigure it to not bind on 0.0.0.0
 
-## 📄 License
+## License
 
 This project is licensed under the terms of the MIT License.  
 See the [`LICENSE`](LICENSE) file for details.

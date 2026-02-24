@@ -7,8 +7,8 @@ services:
     networks:
       - dns_net
     volumes:
-    - ./config/unbound/unbound.conf:/usr/local/unbound/etc/unbound/unbound.conf:ro
-    - unbound:/usr/local/unbound/etc/unbound/var
+      - ./config/unbound/unbound.conf:/usr/local/unbound/etc/unbound/unbound.conf:ro
+      - unbound:/usr/local/unbound/etc/unbound/var
     restart: unless-stopped
     # Exposed only inside dns_net (not published to host)
     expose:

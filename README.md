@@ -225,7 +225,7 @@ The following requirements must be met before deploying the stack.
 * Linux-based host system (Debian/Ubuntu recommended)
 * Docker Engine (24.x or newer recommended)
 * Docker Compose v2 (plugin-based)
-* Access to the Docker socket (required by Traefik for dynamic service discovery)
+* Traefik dynamic configuration files under `config/traefik/dynamic/`
 
 ---
 
@@ -400,6 +400,7 @@ The stack is configured through a small set of files with clear ownership.
 | `.env` (from `.env.example`) | Runtime settings (IP, passwords, domain-related values, time zone) |
 | `config/unbound/unbound.conf` | Recursive resolver behavior, privacy and hardening options |
 | `config/traefik/traefik.yml` | Static Traefik configuration (entrypoints, providers, logging) |
+| `config/traefik/dynamic/*.yml` | Dynamic Traefik routers, middlewares, and backend service mappings |
 | `config/traefik/usersfile` | BasicAuth credentials for the Traefik dashboard |
 | `config/stepca/*` | step-ca configuration and secrets (password file, CA settings) |
 | `config/stepca/export-roots.sh` | Root CA export helper (generates `artifacts/pki/*`) |
@@ -699,28 +700,23 @@ This assumes:
 - Ports are not rebound to public interfaces
 ---
 
-### 2. Docker Socket Access
+### 2. Traefik Without Docker Socket
 
-Traefik requires access to the Docker socket for dynamic service discovery.
+Traefik runs with the file provider and does not require Docker socket access.
 
-⚠ Security Implication:
+Security implication:
 
-Access to `/var/run/docker.sock` is effectively equivalent to root-level control over the Docker host.
+By removing `/var/run/docker.sock`, compromise of Traefik no longer grants direct control over the Docker host.
 
-If Traefik were compromised, an attacker could:
+Operational trade-off:
 
-- Inspect all container metadata
-- Start new containers
-- Mount host paths
-- Escalate privileges
-- Potentially gain full control over the host system
+- No automatic container discovery via labels
+- New routes must be added explicitly in `config/traefik/dynamic/*.yml`
 
-Mitigation strategies:
+Security measures:
 
 - Protect the Traefik dashboard via strong authentication
-- Restrict host-level access to trusted administrators only
-- Avoid overly permissive container labels
-- Consider a Docker socket proxy (e.g., Tecnativa/docker-socket-proxy) in higher-security environments
+- Keep dynamic route definitions under version control and code review
 - Restrict port bindings to LAN interfaces where possible
 ---
 
@@ -889,3 +885,4 @@ This project is provided for educational and personal use only.
 It is distributed "as is", without warranty of any kind.  
 The author assumes no responsibility for security issues, data loss,  
 or damages resulting from its use or misconfiguration.
+

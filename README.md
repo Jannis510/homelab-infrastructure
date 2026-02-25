@@ -92,7 +92,7 @@ Backend services (e.g., the Pi-hole web interface) are never exposed directly an
 1. DNS clients query **Pi-hole** (`53/tcp`, `53/udp`).
 2. Pi-hole forwards external DNS lookups to **Unbound** (`5335/tcp`, internal only).
 3. HTTP(S) traffic enters through **Traefik** (`80/tcp`, `443/tcp`).
-4. Traefik requests TLS certificates from **step-ca** via ACME over the internal `proxy_net`.
+4. Traefik requests TLS certificates from **step-ca** via ACME over the internal `pki_net`.
 5. Traefik routes requests to backend services (e.g., Pi-hole web UI on container port `80`).
 
 ---
@@ -130,7 +130,7 @@ ensure ports are either:
 
 #### Internal-Only Services
 * `unbound` – reachable only within `dns_net`
-* `stepca` – reachable only within `proxy_net`
+* `stepca` – reachable only within `pki_net`
 
 ACME communication between Traefik and step-ca occurs exclusively inside the Docker network.
 
@@ -153,29 +153,41 @@ ACME communication between Traefik and step-ca occurs exclusively inside the Doc
 flowchart LR
 
   subgraph dns_net["dns_net"]
-    PiHoleDNS["Pi-hole (dual-homend)"]
+    PiHoleDNS["Pi-hole (dual-homed)"]
     Unbound["Unbound"]
   end
 
-  subgraph proxy_net["proxy_net"]
-    PiHoleWEB["Pi-hole (dual-homend)"]
-    Traefik["Traefik"]
+  subgraph proxy_net["proxy_net (Ingress + App Services)"]
+    PiHoleWEB["Pi-hole (dual-homed)"]
+    TraefikProxy["Traefik (dual-homed)"]
+    FutureSvc["Services (behind Traefik)"]
+  end
+
+  subgraph pki_net["pki_net (Internal PKI)"]
+    TraefikPKI["Traefik (dual-homed)"]
     StepCA["step-ca"]
-    Export["stepca-export"]
+    Export["stepca-export (one-shot)"]
   end
 
   PiHoleDNS -.->|same Pi-hole| PiHoleWEB
+  TraefikProxy -.->|same Traefik| TraefikPKI
 ```
 
 * `dns_net`
   * Services: `pihole`, `unbound`
-  * Purpose: resolver chain isolation
+  * Purpose: DNS resolver chain isolation
 
 * `proxy_net`
-  * Services: `traefik`, `stepca`, `pihole`, `stepca-export`
-  * Purpose: HTTPS ingress and internal PKI
+  * Services: `traefik`, `pihole` (+ future services behind Traefik)
+  * Purpose: HTTPS ingress and application routing
 
-`pihole` is dual-homed (`dns_net` + `proxy_net`) and acts as a controlled bridge between DNS resolution and web ingress naming under `*.home.arpa`.
+* `pki_net`
+  * Services: `stepca`, `stepca-export`, `traefik`
+  * Purpose: internal PKI and ACME communication path
+
+`pihole` is dual-homed (`dns_net` + `proxy_net`) to connect DNS resolution with web ingress naming under `*.home.arpa`.
+
+`traefik` is dual-homed (`proxy_net` + `pki_net`) so it can route ingress traffic and request certificates from `step-ca` via ACME.
 
 ---
 
@@ -191,8 +203,11 @@ flowchart LR
 
 3. **proxy_net**
    * HTTPS ingress
+   * Backend service routing behind Traefik
+
+4. **pki_net**
    * ACME certificate issuance
-   * PKI boundary
+   * Internal PKI boundary (`step-ca`)
 
 Clear separation of trust zones minimizes lateral movement and reduces cross-service exposure.
 
@@ -722,19 +737,21 @@ Security measures:
 
 ### 3. Internal PKI and Trust
 
-TLS certificates are issued by an internal step-ca instance via ACME.
+TLS certificates are issued by an internal `step-ca` instance via ACME.
+`step-ca` is isolated in `pki_net` and is reachable only by `traefik` (and the one-shot `stepca-export` job) over internal Docker networking.
 
 Advantages:
 
-* No browser warnings from self-signed certificates
+* No browser warnings from ad-hoc self-signed leaf certificates
 * Full control over the trust chain
 * Independence from public certificate authorities
 
 Important:
 
-* Treat `config/stepca/password.txt` and CA materials as sensitive secrets.
+* Treat `config/stepca/password.txt`, CA keys, and exported root artifacts as sensitive secrets.
 * Distribute the Root CA only to trusted devices.
-* Protect CA backups appropriately.
+* Protect CA backups appropriately (encrypted + offline copy recommended).
+* If CA private material is compromised, perform full CA rotation and re-enroll trust on all clients.
 
 ---
 
@@ -742,10 +759,14 @@ Important:
 
 Services are separated into dedicated Docker networks:
 
-* `dns_net` – resolver path
-* `proxy_net` – ingress and internal PKI
+* `dns_net` – resolver path (`pihole` ↔ `unbound`)
+* `proxy_net` – HTTPS ingress and backend service routing behind Traefik
+* `pki_net` – internal PKI path (`traefik` ↔ `step-ca` via ACME)
 
-Only required services are dual-homed.
+Only required services are dual-homed:
+* `pihole` (`dns_net` + `proxy_net`)
+* `traefik` (`proxy_net` + `pki_net`)
+
 Cross-network exposure is minimized by design.
 
 ---

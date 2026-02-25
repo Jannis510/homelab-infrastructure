@@ -102,7 +102,7 @@ docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml down -v --rem
 * Internal DNS for `*.home.arpa`
 * `step-ca` health endpoint responsiveness
 * Traefik HTTP responsiveness
-* Traefik router registration (`pihole@docker`)
+* Traefik router registration (pihole@file)
 
 This ensures that the stack behaves correctly as an integrated system, not only at a syntactic level.
 

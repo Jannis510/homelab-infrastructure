@@ -68,6 +68,7 @@ services:
         condition: service_completed_successfully
     # Single HTTPS ingress entrypoint
     networks:
+      - pki_net
       - proxy_net
     # Public HTTP/HTTPS exposure (LAN only; no router port forwarding)
     ports:
@@ -88,7 +89,7 @@ services:
     container_name: stepca
     # Internal ACME CA (no published ports)
     networks:
-      - proxy_net
+      - pki_net
     volumes:
       # Persistent CA state (keys, certs)
       - stepca-data:/home/step
@@ -113,7 +114,7 @@ services:
     depends_on:
       - stepca
     networks:
-      - proxy_net
+      - pki_net
     volumes:
       - ./artifacts/pki:/export
       - ./config/stepca/export-roots.sh:/usr/local/bin/export-roots.sh:ro
@@ -127,8 +128,13 @@ networks:
     name: dns_net
     driver: bridge
 
+  pki_net:
+    # Isolated PKI network (StepCA & Traefik)
+    name: pki_net
+    driver: bridge
+
   proxy_net:
-    # HTTPS ingress + internal PKI network
+    # HTTPS ingress network
     name: proxy_net
     driver: bridge
 

@@ -64,18 +64,7 @@ The stack emphasizes:
 This section describes traffic flow, network boundaries, service exposure, and trust zones of the stack.
 
 
-```mermaid
-flowchart TB
-
-    Client["LAN / VPN Client"]
-
-    Client -->|DNS 53| PiHole["Pi-hole (DNS)"]
-    PiHole -->|Recursive| Unbound["Unbound"]
-
-    Client -->|HTTPS 443| Traefik["Traefik (Ingress)"]
-    Traefik -->|route| PiHoleUI["Pi-hole Web UI"]
-    Traefik -->|ACME| StepCA["step-ca (Internal CA)"]
-```
+![Architecture Overview](docs/img/architecture_overview.svg)
 
 Clients inside the LAN or connected via VPN use Pi-hole as their primary DNS resolver.
 External DNS queries are forwarded to Unbound, which performs recursive resolution.
@@ -149,29 +138,7 @@ ACME communication between Traefik and step-ca occurs exclusively inside the Doc
 
 ### Docker Network Segmentation
 
-```mermaid
-flowchart LR
-
-  subgraph dns_net["dns_net"]
-    PiHoleDNS["Pi-hole (dual-homed)"]
-    Unbound["Unbound"]
-  end
-
-  subgraph proxy_net["proxy_net (Ingress + App Services)"]
-    PiHoleWEB["Pi-hole (dual-homed)"]
-    TraefikProxy["Traefik (dual-homed)"]
-    FutureSvc["Services (behind Traefik)"]
-  end
-
-  subgraph pki_net["pki_net (Internal PKI)"]
-    TraefikPKI["Traefik (dual-homed)"]
-    StepCA["step-ca"]
-    Export["stepca-export (one-shot)"]
-  end
-
-  PiHoleDNS -.->|same Pi-hole| PiHoleWEB
-  TraefikProxy -.->|same Traefik| TraefikPKI
-```
+![Network Segmentation](docs/img/network_segmentation.svg)
 
 * `dns_net`
   * Services: `pihole`, `unbound`

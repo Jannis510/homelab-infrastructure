@@ -36,8 +36,8 @@ services:
       - proxy_net
     # Publish DNS to host (LAN clients use this as primary resolver)
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
+      - "${SERVER_LOCAL_IP}:53:53/tcp"
+      - "${SERVER_LOCAL_IP}:53:53/udp"
     environment:
       TZ: "${TZ}"
       FTLCONF_webserver_api_password: "${PIHOLE_WEBPASSWORD}"
@@ -46,8 +46,8 @@ services:
       FTLCONF_dns_upstreams: "${PIHOLE_DNS_UPSTREAMS:-unbound#5335}"
       RATE_LIMIT: "${PIHOLE_RATE_LIMIT:-0/0}"
       FTLCONF_dns_hosts: |-
-        ${PIHOLE_LOCAL_IP:-192.168.0.10} pihole.home.arpa
-        ${PIHOLE_LOCAL_IP:-192.168.0.10} traefik.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} pihole.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} traefik.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -72,8 +72,8 @@ services:
       - proxy_net
     # Public HTTP/HTTPS exposure (LAN only; no router port forwarding)
     ports:
-      - "80:80"
-      - "443:443"
+      - "${SERVER_LOCAL_IP}:80:80"
+      - "${SERVER_LOCAL_IP}:443:443"
     volumes:
       - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik/dynamic:/etc/traefik/dynamic:ro

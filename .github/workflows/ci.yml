@@ -20,6 +20,10 @@ jobs:
       - name: Validate Docker Compose configuration
         run: |
           docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml config >/dev/null
+          for f in services/*/compose.yml; do
+            echo "Validating $f..."
+            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" config >/dev/null
+          done
 
       - name: Lint YAML files
         uses: ibiqlik/action-yamllint@v3
@@ -43,7 +47,7 @@ jobs:
 
       - name: Policy - forbid :latest image tags
         run: |
-          if grep -R --line-number -E 'image:\s+.+:latest\b' compose.yml; then
+          if grep -R --line-number -E 'image:\s+.+:latest\b' compose.yml services/; then
             echo "ERROR: Do not use :latest tags." >&2
             exit 1
           fi

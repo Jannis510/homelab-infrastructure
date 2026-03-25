@@ -10,5 +10,7 @@ config/stepca/password.txt
 # Traefik
 config/traefik/usersfile
 
+services/**/.env
+
 .idea
 .claude

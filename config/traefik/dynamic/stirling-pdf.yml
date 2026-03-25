@@ -1,0 +1,17 @@
+http:
+  routers:
+    stirling-pdf:
+      rule: Host(`stirling-pdf.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - secure-headers@file
+      service: stirling-pdf-svc
+
+  services:
+    stirling-pdf-svc:
+      loadBalancer:
+        servers:
+          - url: http://stirling-pdf:8080

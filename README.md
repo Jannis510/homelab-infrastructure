@@ -40,11 +40,13 @@ External access is intended exclusively via VPN; no direct public exposure is re
 This repository provides a production-inspired infrastructure stack
 for a private home lab operating within a LAN environment.
 
-The stack consists of:
+The core stack consists of:
 * **Pi-hole** – local DNS frontend
 * **Unbound** – recursive upstream DNS resolver
 * **Traefik** – reverse proxy and HTTPS entrypoint
 * **Smallstep step-ca** – private certificate authority with ACME support
+
+Additional optional services (e.g. Stirling-PDF) are located under `services/` and can be started and stopped independently. They are not required for the core stack to function and can be omitted if not needed.
 
 All services are published under the reserved domain `*.home.arpa` and are intended strictly for internal use.
 Remote access is performed exclusively via VPN; no services are directly exposed to the public internet.

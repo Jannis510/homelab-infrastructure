@@ -13,6 +13,7 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
+      - "services/**"
   push:
     branches: [main]
     paths:
@@ -20,6 +21,7 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
+      - "services/**"
 
 jobs:
   smoke:

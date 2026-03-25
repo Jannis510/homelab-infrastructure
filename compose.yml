@@ -48,6 +48,7 @@ services:
       FTLCONF_dns_hosts: |-
         ${SERVER_LOCAL_IP:-192.168.0.10} pihole.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} traefik.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} stirling-pdf.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -70,10 +71,16 @@ services:
     networks:
       - pki_net
       - proxy_net
-    # Public HTTP/HTTPS exposure (LAN only; no router port forwarding)
+    # Traefik binds to 0.0.0.0 (all interfaces) rather than SERVER_LOCAL_IP.
+    # This is required for step-ca's TLS-ALPN-01 ACME challenge: step-ca connects back to
+    # Traefik via `host-gateway` (Docker Desktop: 192.168.65.254, Linux: 172.17.0.1),
+    # which is not the LAN IP. Binding only to SERVER_LOCAL_IP would cause
+    # "connection refused" during certificate issuance for all domains.
+    # Security: no internet exposure — LAN-only access is enforced at the router (no port
+    # forwarding). Docker-internal interfaces are trusted within the home network boundary.
     ports:
-      - "${SERVER_LOCAL_IP}:80:80"
-      - "${SERVER_LOCAL_IP}:443:443"
+      - "80:80"
+      - "443:443"
     volumes:
       - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik/dynamic:/etc/traefik/dynamic:ro
@@ -103,10 +110,14 @@ services:
       DOCKER_STEPCA_INIT_PASSWORD_FILE: /run/password.txt
       DOCKER_STEPCA_INIT_ACME: ${STEPCA_INIT_ACME:-true}
     restart: unless-stopped
-    # Map internal FQDNs to host gateway for ACME validation
+    # Map internal FQDNs to host gateway for ACME TLS-ALPN-01 validation.
+    # Step-ca connects back to each domain on port 443 to complete the challenge.
+    # host-gateway resolves to the Docker host (Docker Desktop: 192.168.65.254,
+    # Linux Docker: 172.17.0.1). Each service that needs a TLS cert must be listed here.
     extra_hosts:
       - "traefik.home.arpa:host-gateway"
       - "pihole.home.arpa:host-gateway"
+      - "stirling-pdf.home.arpa:host-gateway"
 
   stepca-export:
     image: alpine:3.21

@@ -103,6 +103,12 @@ services:
       DOCKER_STEPCA_INIT_PASSWORD_FILE: /run/password.txt
       DOCKER_STEPCA_INIT_ACME: ${STEPCA_INIT_ACME:-true}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --no-check-certificate -O /dev/null https://localhost:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
     # Map internal FQDNs to host gateway for ACME validation
     extra_hosts:
       - "traefik.home.arpa:host-gateway"
@@ -112,7 +118,8 @@ services:
     image: alpine:3.21
     # One-shot job to export Root CA bundle after initialization
     depends_on:
-      - stepca
+      stepca:
+        condition: service_healthy
     networks:
       - pki_net
     volumes:

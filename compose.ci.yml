@@ -6,5 +6,7 @@ services:
     ports: !reset []
 
   traefik:
-    # In CI, remove published ports — SERVER_LOCAL_IP doesn't exist on the runner.
-    ports: !reset []
+    # In CI, bind to all interfaces instead of SERVER_LOCAL_IP (which doesn't exist on the runner).
+    ports: !reset
+      - "80:80"
+      - "443:443"

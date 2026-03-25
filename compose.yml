@@ -85,7 +85,7 @@ services:
       - SSL_CERT_FILE=/certs/root_ca.crt
 
   stepca:
-    image: smallstep/step-ca:0.30.0-rc2
+    image: smallstep/step-ca:0.30.2
     container_name: stepca
     # Internal ACME CA (no published ports)
     networks:

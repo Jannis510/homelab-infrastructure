@@ -111,7 +111,7 @@ fi
 
 # 10) Traefik file-provider routers must be loaded
 routers_json="$(curl -ksS --resolve traefik.home.arpa:443:127.0.0.1 \
-  -u admin:ci-smoke-password \
+  -u "admin:${CI_SMOKE_PASSWORD}" \
   https://traefik.home.arpa/api/http/routers || true)"
 assert_not_empty "$routers_json" "Traefik API routers endpoint is empty/unreachable"
 echo "$routers_json" | grep -q '"pihole@file"' || {

@@ -104,11 +104,11 @@ services:
       DOCKER_STEPCA_INIT_ACME: ${STEPCA_INIT_ACME:-true}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --no-check-certificate -O /dev/null https://localhost:9000/health"]
-      interval: 10s
+      test: ["CMD", "wget", "-q", "--no-check-certificate", "-O", "/dev/null", "https://localhost:9000/health"]
+      interval: 15s
       timeout: 5s
-      retries: 12
-      start_period: 30s
+      retries: 20
+      start_period: 60s
     # Map internal FQDNs to host gateway for ACME validation
     extra_hosts:
       - "traefik.home.arpa:host-gateway"

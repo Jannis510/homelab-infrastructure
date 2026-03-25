@@ -42,7 +42,7 @@ jobs:
           docker run --rm \
             -v "$PWD:/work" -w /work \
             -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-            aquasec/trivy:0.69.1 \
+            aquasec/trivy:0.69.3 \
             fs --severity CRITICAL,HIGH --exit-code 1 \
             --ignorefile /work/.trivyignore \
             --format sarif --output /work/trivy-results/trivy-fs.sarif /work
@@ -85,7 +85,7 @@ jobs:
             docker run --rm \
               -v "$PWD:/work" -w /work \
               -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-              aquasec/trivy:0.69.1 \
+              aquasec/trivy:0.69.3 \
               image --severity CRITICAL,HIGH --exit-code 0 \
               --ignorefile /work/.trivyignore \
               --format table "$img" || true
@@ -94,7 +94,7 @@ jobs:
             docker run --rm \
               -v "$PWD:/work" -w /work \
               -v "$HOME/.cache/trivy:/root/.cache/trivy" \
-              aquasec/trivy:0.69.1 \
+              aquasec/trivy:0.69.3 \
               image --severity CRITICAL,HIGH --exit-code 1 \
               --ignorefile /work/.trivyignore \
               --format sarif --output "/work/trivy-results/images/${SAFE_NAME}.sarif" "$img" \

@@ -64,18 +64,7 @@ The stack emphasizes:
 This section describes traffic flow, network boundaries, service exposure, and trust zones of the stack.
 
 
-```mermaid
-flowchart TB
-
-    Client["LAN / VPN Client"]
-
-    Client -->|DNS 53| PiHole["Pi-hole (DNS)"]
-    PiHole -->|Recursive| Unbound["Unbound"]
-
-    Client -->|HTTPS 443| Traefik["Traefik (Ingress)"]
-    Traefik -->|route| PiHoleUI["Pi-hole Web UI"]
-    Traefik -->|ACME| StepCA["step-ca (Internal CA)"]
-```
+![Architecture Overview](docs/img/architecture_overview.svg)
 
 Clients inside the LAN or connected via VPN use Pi-hole as their primary DNS resolver.
 External DNS queries are forwarded to Unbound, which performs recursive resolution.
@@ -92,7 +81,7 @@ Backend services (e.g., the Pi-hole web interface) are never exposed directly an
 1. DNS clients query **Pi-hole** (`53/tcp`, `53/udp`).
 2. Pi-hole forwards external DNS lookups to **Unbound** (`5335/tcp`, internal only).
 3. HTTP(S) traffic enters through **Traefik** (`80/tcp`, `443/tcp`).
-4. Traefik requests TLS certificates from **step-ca** via ACME over the internal `proxy_net`.
+4. Traefik requests TLS certificates from **step-ca** via ACME over the internal `pki_net`.
 5. Traefik routes requests to backend services (e.g., Pi-hole web UI on container port `80`).
 
 ---
@@ -130,7 +119,7 @@ ensure ports are either:
 
 #### Internal-Only Services
 * `unbound` – reachable only within `dns_net`
-* `stepca` – reachable only within `proxy_net`
+* `stepca` – reachable only within `pki_net`
 
 ACME communication between Traefik and step-ca occurs exclusively inside the Docker network.
 
@@ -149,33 +138,23 @@ ACME communication between Traefik and step-ca occurs exclusively inside the Doc
 
 ### Docker Network Segmentation
 
-```mermaid
-flowchart LR
-
-  subgraph dns_net["dns_net"]
-    PiHoleDNS["Pi-hole (dual-homend)"]
-    Unbound["Unbound"]
-  end
-
-  subgraph proxy_net["proxy_net"]
-    PiHoleWEB["Pi-hole (dual-homend)"]
-    Traefik["Traefik"]
-    StepCA["step-ca"]
-    Export["stepca-export"]
-  end
-
-  PiHoleDNS -.->|same Pi-hole| PiHoleWEB
-```
+![Network Segmentation](docs/img/network_segmentation.svg)
 
 * `dns_net`
   * Services: `pihole`, `unbound`
-  * Purpose: resolver chain isolation
+  * Purpose: DNS resolver chain isolation
 
 * `proxy_net`
-  * Services: `traefik`, `stepca`, `pihole`, `stepca-export`
-  * Purpose: HTTPS ingress and internal PKI
+  * Services: `traefik`, `pihole` (+ future services behind Traefik)
+  * Purpose: HTTPS ingress and application routing
 
-`pihole` is dual-homed (`dns_net` + `proxy_net`) and acts as a controlled bridge between DNS resolution and web ingress naming under `*.home.arpa`.
+* `pki_net`
+  * Services: `stepca`, `stepca-export`, `traefik`
+  * Purpose: internal PKI and ACME communication path
+
+`pihole` is dual-homed (`dns_net` + `proxy_net`) to connect DNS resolution with web ingress naming under `*.home.arpa`.
+
+`traefik` is dual-homed (`proxy_net` + `pki_net`) so it can route ingress traffic and request certificates from `step-ca` via ACME.
 
 ---
 
@@ -191,8 +170,11 @@ flowchart LR
 
 3. **proxy_net**
    * HTTPS ingress
+   * Backend service routing behind Traefik
+
+4. **pki_net**
    * ACME certificate issuance
-   * PKI boundary
+   * Internal PKI boundary (`step-ca`)
 
 Clear separation of trust zones minimizes lateral movement and reduces cross-service exposure.
 
@@ -225,7 +207,7 @@ The following requirements must be met before deploying the stack.
 * Linux-based host system (Debian/Ubuntu recommended)
 * Docker Engine (24.x or newer recommended)
 * Docker Compose v2 (plugin-based)
-* Access to the Docker socket (required by Traefik for dynamic service discovery)
+* Traefik dynamic configuration files under `config/traefik/dynamic/`
 
 ---
 
@@ -400,6 +382,7 @@ The stack is configured through a small set of files with clear ownership.
 | `.env` (from `.env.example`) | Runtime settings (IP, passwords, domain-related values, time zone) |
 | `config/unbound/unbound.conf` | Recursive resolver behavior, privacy and hardening options |
 | `config/traefik/traefik.yml` | Static Traefik configuration (entrypoints, providers, logging) |
+| `config/traefik/dynamic/*.yml` | Dynamic Traefik routers, middlewares, and backend service mappings |
 | `config/traefik/usersfile` | BasicAuth credentials for the Traefik dashboard |
 | `config/stepca/*` | step-ca configuration and secrets (password file, CA settings) |
 | `config/stepca/export-roots.sh` | Root CA export helper (generates `artifacts/pki/*`) |
@@ -699,46 +682,43 @@ This assumes:
 - Ports are not rebound to public interfaces
 ---
 
-### 2. Docker Socket Access
+### 2. Traefik Without Docker Socket
 
-Traefik requires access to the Docker socket for dynamic service discovery.
+Traefik runs with the file provider and does not require Docker socket access.
 
-⚠ Security Implication:
+Security implication:
 
-Access to `/var/run/docker.sock` is effectively equivalent to root-level control over the Docker host.
+By removing `/var/run/docker.sock`, compromise of Traefik no longer grants direct control over the Docker host.
 
-If Traefik were compromised, an attacker could:
+Operational trade-off:
 
-- Inspect all container metadata
-- Start new containers
-- Mount host paths
-- Escalate privileges
-- Potentially gain full control over the host system
+- No automatic container discovery via labels
+- New routes must be added explicitly in `config/traefik/dynamic/*.yml`
 
-Mitigation strategies:
+Security measures:
 
 - Protect the Traefik dashboard via strong authentication
-- Restrict host-level access to trusted administrators only
-- Avoid overly permissive container labels
-- Consider a Docker socket proxy (e.g., Tecnativa/docker-socket-proxy) in higher-security environments
+- Keep dynamic route definitions under version control and code review
 - Restrict port bindings to LAN interfaces where possible
 ---
 
 ### 3. Internal PKI and Trust
 
-TLS certificates are issued by an internal step-ca instance via ACME.
+TLS certificates are issued by an internal `step-ca` instance via ACME.
+`step-ca` is isolated in `pki_net` and is reachable only by `traefik` (and the one-shot `stepca-export` job) over internal Docker networking.
 
 Advantages:
 
-* No browser warnings from self-signed certificates
+* No browser warnings from ad-hoc self-signed leaf certificates
 * Full control over the trust chain
 * Independence from public certificate authorities
 
 Important:
 
-* Treat `config/stepca/password.txt` and CA materials as sensitive secrets.
+* Treat `config/stepca/password.txt`, CA keys, and exported root artifacts as sensitive secrets.
 * Distribute the Root CA only to trusted devices.
-* Protect CA backups appropriately.
+* Protect CA backups appropriately (encrypted + offline copy recommended).
+* If CA private material is compromised, perform full CA rotation and re-enroll trust on all clients.
 
 ---
 
@@ -746,10 +726,14 @@ Important:
 
 Services are separated into dedicated Docker networks:
 
-* `dns_net` – resolver path
-* `proxy_net` – ingress and internal PKI
+* `dns_net` – resolver path (`pihole` ↔ `unbound`)
+* `proxy_net` – HTTPS ingress and backend service routing behind Traefik
+* `pki_net` – internal PKI path (`traefik` ↔ `step-ca` via ACME)
 
-Only required services are dual-homed.
+Only required services are dual-homed:
+* `pihole` (`dns_net` + `proxy_net`)
+* `traefik` (`proxy_net` + `pki_net`)
+
 Cross-network exposure is minimized by design.
 
 ---
@@ -889,3 +873,4 @@ This project is provided for educational and personal use only.
 It is distributed "as is", without warranty of any kind.  
 The author assumes no responsibility for security issues, data loss,  
 or damages resulting from its use or misconfiguration.
+

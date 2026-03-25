@@ -1,0 +1,47 @@
+http:
+  routers:
+    pihole:
+      rule: Host(`pihole.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - pihole-redirect
+        - secure-headers
+      service: pihole-svc
+
+    traefik:
+      rule: Host(`traefik.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - traefik-auth
+        - secure-headers
+      service: api@internal
+
+  middlewares:
+    pihole-redirect:
+      redirectRegex:
+        regex: "^https?://pihole\\.home\\.arpa/?$"
+        replacement: "https://pihole.home.arpa/admin/"
+        permanent: true
+    traefik-auth:
+      basicAuth:
+        usersFile: /etc/traefik/usersfile
+    secure-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: false
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+
+  services:
+    pihole-svc:
+      loadBalancer:
+        servers:
+          - url: http://pihole:80

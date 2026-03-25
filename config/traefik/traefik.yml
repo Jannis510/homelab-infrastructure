@@ -16,19 +16,19 @@ entryPoints:
 
 # API & Dashboard
 # Dashboard is enabled but not exposed insecurely.
-# Access is controlled via router + BasicAuth middleware in Docker labels.
+# Access is controlled via router + BasicAuth middleware in dynamic file config.
 api:
   dashboard: true
   insecure: false
 
 
 # Providers
-# Docker provider is used for dynamic service discovery.
-# exposedByDefault=false ensures only explicitly labeled containers are routed.
+# File provider is used for dynamic routing/service configuration.
+# Dynamic config files are loaded from /etc/traefik/dynamic.
 providers:
-  docker:
-    endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic
+    watch: true
 
 
 # ACME / Internal PKI

@@ -3,30 +3,35 @@
 This document tracks accepted/ignored Trivy findings where no upstream fix is available yet.
 Exceptions are reviewed on new upstream releases.
 
-## smallstep/step-ca
+## Pending upstream image rebuilds
 
-### OpenSSL (upstream base image pending)
-- CVE-2025-15467
-- CVE-2025-69419
-- CVE-2025-69421
+The following CVEs are fixed upstream but not yet included in the affected container images.
 
-Rationale: Awaiting upstream image rebuild. Stack is LAN/VPN-only, not publicly exposed.
+### CVE-2026-33186 — gRPC-Go authorization bypass (CRITICAL)
+- **Affected image:** `traefik:v3.6.11` (gobinary: `usr/local/bin/traefik`)
+- **Component:** `google.golang.org/grpc` v1.79.1
+- **Fix available in:** grpc v1.79.3
+- **Rationale:** Awaiting traefik rebuild with updated grpc dependency.
 
-Review trigger: New step-ca image release including the patched OpenSSL package.
+Review trigger: New traefik release built with grpc >= 1.79.3.
 
-### Go stdlib (awaiting step-ca rebuild with Go >= 1.25.7)
-- CVE-2025-68121
-- CVE-2025-61726
-- CVE-2025-61728
-- CVE-2025-61730
+### CVE-2026-22184 — zlib buffer overflow (HIGH)
+- **Affected images:** `traefik:v3.6.11`, `pihole/pihole:2026.02.0`
+- **Component:** `zlib` 1.3.1-r2
+- **Fix available in:** zlib 1.3.2-r0
+- **Rationale:** Awaiting image rebuilds with updated Alpine base layer.
 
-Rationale: Awaiting upstream rebuild. Restricted exposure (internal networks only).
+Review trigger: New traefik or pihole releases based on Alpine with zlib >= 1.3.2-r0.
 
-Review trigger: step-ca release built with Go >= 1.25.7.
+### CVE-2026-32767 — libexpat SQL injection bypass (CRITICAL)
+- **Affected image:** `pihole/pihole:2026.02.0`
+- **Component:** `libexpat` 2.7.4-r0
+- **Fix available in:** libexpat 2.7.5-r0
+- **Rationale:** Awaiting pihole image rebuild with updated Alpine base layer.
 
-### Nebula (not used)
-- CVE-2026-25793
+Review trigger: New pihole release based on Alpine with libexpat >= 2.7.5-r0.
 
-Rationale: Component not used in this deployment.
+---
 
-Review trigger: If nebula is introduced or step-ca changes dependencies.
+Stack is LAN-only, not publicly exposed. All CVEs have upstream fixes; exceptions
+are temporary until the respective images are rebuilt.

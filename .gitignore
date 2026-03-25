@@ -11,3 +11,4 @@ config/stepca/password.txt
 config/traefik/usersfile
 
 .idea
+.claude

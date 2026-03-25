@@ -4,7 +4,6 @@ set -eu
 OUT_ROOTS="/export/roots.pem"
 OUT_ROOTCRT="/export/root_ca.crt"
 
-CA_HEALTH="https://stepca:9000/health"
 CA_ROOTS="https://stepca:9000/roots.pem"
 
 # If both artifacts already exist and are non-empty, skip export.
@@ -16,16 +15,16 @@ fi
 echo "waiting for stepca..."
 
 i=0
-while [ $i -lt 60 ]; do
-  if wget -q --no-check-certificate -O /dev/null "$CA_HEALTH" 2>/dev/null; then
+while [ $i -lt 300 ]; do
+  if wget -q --no-check-certificate -O /dev/null "$CA_ROOTS" 2>/dev/null; then
     break
   fi
   i=$((i+1))
   sleep 1
 done
 
-if [ $i -eq 60 ]; then
-  echo "stepca not reachable"
+if [ $i -eq 300 ]; then
+  echo "stepca not reachable after 300s"
   exit 1
 fi
 

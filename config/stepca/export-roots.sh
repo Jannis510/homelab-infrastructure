@@ -12,6 +12,22 @@ if [ -s "$OUT_ROOTS" ] && [ -s "$OUT_ROOTCRT" ]; then
   exit 0
 fi
 
+echo "waiting for stepca..."
+
+i=0
+while [ $i -lt 300 ]; do
+  if wget -q --no-check-certificate -O /dev/null "$CA_ROOTS" 2>/dev/null; then
+    break
+  fi
+  i=$((i+1))
+  sleep 1
+done
+
+if [ $i -eq 300 ]; then
+  echo "stepca not reachable after 300s"
+  exit 1
+fi
+
 echo "exporting roots..."
 wget -q --no-check-certificate -O "$OUT_ROOTS" "$CA_ROOTS"
 

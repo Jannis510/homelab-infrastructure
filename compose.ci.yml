@@ -4,3 +4,7 @@ services:
     # In CI, remove published ports to avoid host exposure.
     # Services communicate only via internal Docker networks.
     ports: !reset []
+
+  traefik:
+    # In CI, remove published ports — SERVER_LOCAL_IP doesn't exist on the runner.
+    ports: !reset []

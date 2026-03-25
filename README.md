@@ -13,7 +13,7 @@
 
 Docker Compose-based infrastructure for a private home lab, designed for operation within a local network.
 The stack provides internal DNS resolution, edge reverse proxy routing, and a private certificate authority
-for services under the reserved domain `*.home.arpa`.
+for services under the reserved domain `*.app.home.arpa`.
 
 External access is intended exclusively via VPN; no direct public exposure is required.
 
@@ -46,9 +46,9 @@ The core stack consists of:
 * **Traefik** – reverse proxy and HTTPS entrypoint
 * **Smallstep step-ca** – private certificate authority with ACME support
 
-Additional optional services (e.g. Stirling-PDF) are located under `services/` and can be started and stopped independently. They are not required for the core stack to function and can be omitted if not needed.
+Additional optional services (e.g. BentoPDF) are located under `services/` and can be started and stopped independently. They are not required for the core stack to function and can be omitted if not needed.
 
-All services are published under the reserved domain `*.home.arpa` and are intended strictly for internal use.
+All services are published under the reserved domain `*.app.home.arpa` and are intended strictly for internal use.
 Remote access is performed exclusively via VPN; no services are directly exposed to the public internet.
 
 The stack emphasizes:
@@ -114,10 +114,10 @@ ensure ports are either:
 * Ensure that host firewall rules block inbound WAN traffic.
 
 #### LAN / VPN Clients
-* DNS via host IP or `pihole.home.arpa` (`53/tcp`, `53/udp`)
+* DNS via host IP or `pihole.app.home.arpa` (`53/tcp`, `53/udp`)
 * HTTPS ingress via:
-  * `https://traefik.home.arpa`
-  * `https://pihole.home.arpa`
+  * `https://traefik.app.home.arpa`
+  * `https://pihole.app.home.arpa`
 
 #### Internal-Only Services
 * `unbound` – reachable only within `dns_net`
@@ -154,7 +154,7 @@ ACME communication between Traefik and step-ca occurs exclusively inside the Doc
   * Services: `stepca`, `stepca-export`, `traefik`
   * Purpose: internal PKI and ACME communication path
 
-`pihole` is dual-homed (`dns_net` + `proxy_net`) to connect DNS resolution with web ingress naming under `*.home.arpa`.
+`pihole` is dual-homed (`dns_net` + `proxy_net`) to connect DNS resolution with web ingress naming under `*.app.home.arpa`.
 
 `traefik` is dual-homed (`proxy_net` + `pki_net`) so it can route ingress traffic and request certificates from `step-ca` via ACME.
 
@@ -229,7 +229,7 @@ The architecture is not hardware-bound and is expected to run on any Linux host 
 
 * The host has a static IP address within the LAN.
 * LAN clients are configured to use the host as their primary DNS server.
-* The reserved domain `home.arpa` is managed internally via Pi-hole.
+* The reserved domain `app.home.arpa` is managed internally via Pi-hole.
 * No public port forwarding is configured on the router.
 
 ---
@@ -332,8 +332,8 @@ DNS Server = <PIHOLE_LOCAL_IP>
 ```
 
 Verify core services from a LAN or VPN client:
-* Traefik dashboard: `https://traefik.home.arpa`
-* Pi-hole admin: `https://pihole.home.arpa`
+* Traefik dashboard: `https://traefik.app.home.arpa`
+* Pi-hole admin: `https://pihole.app.home.arpa`
 
 Ensure that:
 - DNS resolution works via the host IP.
@@ -364,8 +364,8 @@ If you do not want system-wide trust, you can import the Root CA into the browse
 
 After installation, verify that the following endpoints are trusted without certificate warnings:
 
-* `https://traefik.home.arpa`
-* `https://pihole.home.arpa/admin/`
+* `https://traefik.app.home.arpa`
+* `https://pihole.app.home.arpa/admin/`
 
 ---
 
@@ -418,7 +418,7 @@ Install `root_ca.crt` into the trust store of trusted client devices to avoid TL
 
 ### DNS and Naming
 
-All internal services are published under `*.home.arpa`.  
+All internal services are published under `*.app.home.arpa`.  
 Ensure LAN/VPN clients use Pi-hole as their DNS server so the names resolve consistently.
 
 
@@ -798,7 +798,7 @@ docker compose restart traefik
 
 **Symptoms**
 
-* `*.home.arpa` does not resolve
+* `*.app.home.arpa` does not resolve
 * Services are unreachable in the browser
 
 **Diagnostics**
@@ -812,7 +812,7 @@ docker compose ps
 Test name resolution from a client:
 
 ```bash
-nslookup pihole.home.arpa <HOST_IP>
+nslookup pihole.app.home.arpa <HOST_IP>
 ```
 
 Confirm the following:

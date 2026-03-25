@@ -10,6 +10,9 @@ config/stepca/password.txt
 # Traefik
 config/traefik/usersfile
 
+# Authelia
+config/authelia/users_database.yml
+
 services/**/.env
 
 .idea

@@ -1,17 +1,18 @@
 http:
   routers:
-    stirling-pdf:
-      rule: Host(`stirling-pdf.home.arpa`)
+    bentopdf:
+      rule: Host(`bentopdf.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
         certResolver: stepca
       middlewares:
+        - authelia@file
         - secure-headers@file
-      service: stirling-pdf-svc
+      service: bentopdf-svc
 
   services:
-    stirling-pdf-svc:
+    bentopdf-svc:
       loadBalancer:
         servers:
-          - url: http://stirling-pdf:8080
+          - url: http://bentopdf:8080

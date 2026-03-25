@@ -40,15 +40,16 @@ services:
       - "${SERVER_LOCAL_IP}:53:53/udp"
     environment:
       TZ: "${TZ}"
-      FTLCONF_webserver_api_password: "${PIHOLE_WEBPASSWORD}"
+      FTLCONF_webserver_api_password: ""  # Auth via Authelia — no direct UI password needed
       DNSMASQ_LISTENING: "${PIHOLE_DNSMASQ_LISTENING:-all}"
       # Use Unbound as upstream resolver (container name inside dns_net)
       FTLCONF_dns_upstreams: "${PIHOLE_DNS_UPSTREAMS:-unbound#5335}"
       RATE_LIMIT: "${PIHOLE_RATE_LIMIT:-0/0}"
       FTLCONF_dns_hosts: |-
-        ${SERVER_LOCAL_IP:-192.168.0.10} pihole.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} traefik.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} stirling-pdf.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} auth.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} pihole.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} traefik.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} bentopdf.app.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -59,6 +60,28 @@ services:
       timeout: 10s
       retries: 5
 
+
+  authelia:
+    image: authelia/authelia:4.39
+    container_name: authelia
+    networks:
+      - proxy_net
+    expose:
+      - "9091"
+    volumes:
+      - ./config/authelia:/config:ro
+      - authelia-data:/data
+    environment:
+      AUTHELIA_SESSION_SECRET: "${AUTHELIA_SESSION_SECRET}"
+      AUTHELIA_STORAGE_ENCRYPTION_KEY: "${AUTHELIA_STORAGE_ENCRYPTION_KEY}"
+      AUTHELIA_IDENTITY_VALIDATION_RESET_PASSWORD_JWT_SECRET: "${AUTHELIA_JWT_SECRET}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9091/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   traefik:
     image: traefik:v3.6.11
@@ -84,7 +107,6 @@ services:
     volumes:
       - ./config/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./config/traefik/dynamic:/etc/traefik/dynamic:ro
-      - ./config/traefik/usersfile:/etc/traefik/usersfile:ro
       - ./artifacts/pki:/certs/:ro
       - traefik-data:/data
     restart: unless-stopped
@@ -115,9 +137,10 @@ services:
     # host-gateway resolves to the Docker host (Docker Desktop: 192.168.65.254,
     # Linux Docker: 172.17.0.1). Each service that needs a TLS cert must be listed here.
     extra_hosts:
-      - "traefik.home.arpa:host-gateway"
-      - "pihole.home.arpa:host-gateway"
-      - "stirling-pdf.home.arpa:host-gateway"
+      - "traefik.app.home.arpa:host-gateway"
+      - "auth.app.home.arpa:host-gateway"
+      - "pihole.app.home.arpa:host-gateway"
+      - "bentopdf.app.home.arpa:host-gateway"
 
   stepca-export:
     image: alpine:3.21
@@ -155,3 +178,4 @@ volumes:
   unbound:
   stepca-data:
   traefik-data:
+  authelia-data:

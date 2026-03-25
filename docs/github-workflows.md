@@ -99,7 +99,7 @@ docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml down -v --rem
 * Containers are running and healthy
 * `stepca-export` completed successfully
 * DNS resolution via Pi-hole and Unbound
-* Internal DNS for `*.home.arpa`
+* Internal DNS for `*.app.home.arpa`
 * `step-ca` health endpoint responsiveness
 * Traefik HTTP responsiveness
 * Traefik router registration (pihole@file)

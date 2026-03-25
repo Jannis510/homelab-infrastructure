@@ -1,0 +1,52 @@
+---
+# Authelia configuration
+# Secrets are injected via environment variables (see compose.yml):
+#   AUTHELIA_SESSION_SECRET
+#   AUTHELIA_STORAGE_ENCRYPTION_KEY
+
+server:
+  host: 0.0.0.0
+  port: 9091
+
+log:
+  level: info
+
+theme: dark
+
+authentication_backend:
+  file:
+    path: /config/users_database.yml
+    password:
+      algorithm: argon2id
+      argon2:
+        iterations: 3
+        memory: 65536
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+
+access_control:
+  default_policy: deny
+  rules:
+    - domain: "*.app.home.arpa"
+      policy: one_factor
+
+session:
+  cookies:
+    - domain: app.home.arpa
+      authelia_url: https://auth.app.home.arpa
+      expiration: 12h
+      inactivity: 1h
+
+regulation:
+  max_retries: 5
+  find_time: 2m
+  ban_time: 5m
+
+storage:
+  local:
+    path: /data/db.sqlite3
+
+notifier:
+  filesystem:
+    filename: /data/notification.txt

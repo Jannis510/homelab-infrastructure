@@ -14,16 +14,10 @@ docker compose --env-file .env up -d
 
 ```bash
 # Start
-docker compose --env-file services/stirling-pdf/.env -f services/stirling-pdf/compose.yml up -d
+docker compose -f services/bentopdf/compose.yml up -d
 
 # Stop
-docker compose -f services/stirling-pdf/compose.yml down
-```
-
-Copy `.env.example` to `.env` before first start:
-
-```bash
-cp services/stirling-pdf/.env.example services/stirling-pdf/.env
+docker compose -f services/bentopdf/compose.yml down
 ```
 
 ---
@@ -68,7 +62,7 @@ When referencing middlewares defined in `dynamic.yml` (e.g. `traefik-auth`, `sec
 http:
   routers:
     my-service:
-      rule: Host(`my-service.home.arpa`)
+      rule: Host(`my-service.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -93,20 +87,20 @@ Step-ca must be able to resolve and reach each service's hostname on port 443 to
 
 ```yaml
     extra_hosts:
-      - "my-service.home.arpa:host-gateway"
+      - "my-service.app.home.arpa:host-gateway"
 ```
 
 Without this entry, certificate issuance will fail with "The server could not connect to validation target".
 
 ### 4. `compose.yml` — Pi-hole DNS entry
 
-Add a DNS A-record to `FTLCONF_dns_hosts` in the core `compose.yml` so `*.home.arpa` resolves to the server:
+Add a DNS A-record to `FTLCONF_dns_hosts` in the core `compose.yml` so `*.app.home.arpa` resolves to the server:
 
 ```yaml
       FTLCONF_dns_hosts: |-
-        ${SERVER_LOCAL_IP:-192.168.0.10} pihole.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} traefik.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} my-service.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} pihole.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} traefik.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} my-service.app.home.arpa
 ```
 
 After editing, restart Pi-hole to pick up the change:
@@ -153,4 +147,4 @@ To remove an optional service completely:
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| [Stirling-PDF](stirling-pdf/) | `https://stirling-pdf.home.arpa` | PDF tools (merge, split, OCR, convert) |
+| [BentoPDF](bentopdf/) | `https://bentopdf.app.home.arpa` | PDF tools |

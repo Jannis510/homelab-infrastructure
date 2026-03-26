@@ -36,6 +36,7 @@ jobs:
           mkdir -p artifacts/pki
           chmod 0777 artifacts/pki
           printf '%s\n' "$CI_SMOKE_PASSWORD" > config/stepca/password.txt
+          cp config/authelia/users_database.ci.yml config/authelia/users_database.yml
 
       - name: Start stack (CI mode)
         run: |

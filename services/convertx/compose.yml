@@ -2,7 +2,7 @@ name: convertx
 
 services:
   convertx:
-    image: ghcr.io/c4illin/convertx
+    image: ghcr.io/c4illin/convertx:v0.17.0
     container_name: convertx
     # Access exclusively via Traefik — no published ports
     networks:

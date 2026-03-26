@@ -64,6 +64,7 @@ wait_for_service_ready "unbound"
 wait_for_service_ready "pihole"
 wait_for_service_ready "stepca"
 wait_for_service_ready "traefik"
+wait_for_service_ready "authelia"
 
 # 2) stepca-export must have completed successfully
 stepca_export_id="$(compose ps -aq stepca-export)"
@@ -119,4 +120,17 @@ echo "$routers_json" | grep -q '"pihole@file"' || {
   exit 1
 }
 
+# 11) Authelia health endpoint
+authelia_health="$(curl -ksS \
+  --resolve auth.app.home.arpa:443:127.0.0.1 \
+  https://auth.app.home.arpa/api/health || true)"
+assert_not_empty "$authelia_health" "Authelia health endpoint returned no payload"
 
+# 12) SSO gate: protected route without auth must redirect to Authelia
+sso_redirect="$(curl -ksS -o /dev/null -w '%{redirect_url}' \
+  --resolve pihole.app.home.arpa:443:127.0.0.1 \
+  https://pihole.app.home.arpa/admin/ || true)"
+echo "$sso_redirect" | grep -q 'auth\.app\.home\.arpa' || {
+  echo "ERROR: pihole.app.home.arpa did not redirect to Authelia SSO (redirect_url='$sso_redirect')" >&2
+  exit 1
+}

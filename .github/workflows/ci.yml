@@ -22,7 +22,12 @@ jobs:
           docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml config >/dev/null
           for f in services/*/compose.yml; do
             echo "Validating $f..."
-            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" config >/dev/null
+            env_file="$(dirname "$f")/.env.example"
+            if [ -f "$env_file" ]; then
+              docker compose --env-file "$env_file" -f "$f" config >/dev/null
+            else
+              docker compose -f "$f" config >/dev/null
+            fi
           done
 
       - name: Lint YAML files
@@ -55,6 +60,21 @@ jobs:
             echo "ERROR: Do not use :latest tags in shell scripts." >&2
             exit 1
           fi
+
+      - name: Policy - all Traefik routes must use authelia@file middleware
+        run: |
+          FAILED=0
+          for f in config/traefik/dynamic/*.yml; do
+            # authelia.yml defines the SSO portal itself — no middleware needed
+            [ "$(basename "$f")" = "authelia.yml" ] && continue
+            # Only check files that actually define routers
+            grep -q 'routers:' "$f" || continue
+            if ! grep -q 'authelia@file' "$f"; then
+              echo "ERROR: $f defines routers but missing 'authelia@file' middleware" >&2
+              FAILED=1
+            fi
+          done
+          exit $FAILED
 
       - name: Policy - disallow Traefik DEBUG log level on main
         if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.base_ref == 'main') }}

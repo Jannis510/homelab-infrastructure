@@ -13,7 +13,6 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
-      - "services/**"
   push:
     branches: [main]
     paths:
@@ -21,7 +20,6 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
-      - "services/**"
 
 jobs:
   smoke:
@@ -34,12 +32,10 @@ jobs:
         env:
           CI_SMOKE_PASSWORD: ${{ secrets.CI_SMOKE_PASSWORD }}
         run: |
-          mkdir -p config/stepca config/traefik
+          mkdir -p config/stepca
           mkdir -p artifacts/pki
           chmod 0777 artifacts/pki
           printf '%s\n' "$CI_SMOKE_PASSWORD" > config/stepca/password.txt
-          TRAEFIK_AUTH_LINE="$(docker run --rm httpd:2.4-alpine htpasswd -nbB admin "$CI_SMOKE_PASSWORD" | tr -d '\r\n')"
-          printf '%s\n' "$TRAEFIK_AUTH_LINE" > config/traefik/usersfile
 
       - name: Start stack (CI mode)
         run: |

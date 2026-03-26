@@ -1,0 +1,71 @@
+---
+# Services workflow
+# - Validates each service's Docker Compose configuration
+# - Enforces isolation rules: no published ports, all networks must be external
+# - Runs only when services/ changes — core stack smoke tests are separate
+name: Services
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "services/**"
+      - ".github/workflows/services.yml"
+  push:
+    branches: [main]
+    paths:
+      - "services/**"
+      - ".github/workflows/services.yml"
+
+jobs:
+  isolation-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate service compose files
+        run: |
+          set -euo pipefail
+          for f in services/*/compose.yml; do
+            svc=$(dirname "$f" | xargs basename)
+            echo "Validating $svc..."
+            env_file="$(dirname "$f")/.env.example"
+            if [ -f "$env_file" ]; then
+              docker compose --env-file "$env_file" -f "$f" config >/dev/null
+            else
+              docker compose -f "$f" config >/dev/null
+            fi
+          done
+
+      - name: Check service isolation rules
+        run: |
+          python3 - <<'EOF'
+          import yaml, sys, pathlib
+
+          errors = []
+          for compose_file in sorted(pathlib.Path("services").glob("*/compose.yml")):
+              data = yaml.safe_load(compose_file.read_text())
+
+              # Rule 1: no published ports — services must route exclusively via Traefik
+              for name, cfg in (data.get("services") or {}).items():
+                  if "ports" in cfg:
+                      errors.append(
+                          f"{compose_file}: service '{name}' uses 'ports:' — "
+                          "must use 'expose:' only and route via Traefik"
+                      )
+
+              # Rule 2: all top-level networks must be external (no standalone network definitions)
+              for net_name, net_cfg in (data.get("networks") or {}).items():
+                  if not (net_cfg or {}).get("external"):
+                      errors.append(
+                          f"{compose_file}: network '{net_name}' is not marked external — "
+                          "services must attach to core stack networks only"
+                      )
+
+          if errors:
+              for e in errors:
+                  print(f"ERROR: {e}", file=sys.stderr)
+              sys.exit(1)
+
+          print("All services pass isolation checks.")
+          EOF

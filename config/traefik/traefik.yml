@@ -16,7 +16,7 @@ entryPoints:
 
 # API & Dashboard
 # Dashboard is enabled but not exposed insecurely.
-# Access is controlled via router + BasicAuth middleware in dynamic file config.
+# Access is controlled via router + Authelia ForwardAuth middleware in dynamic file config.
 api:
   dashboard: true
   insecure: false

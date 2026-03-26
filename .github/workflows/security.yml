@@ -74,7 +74,12 @@ jobs:
           set -euo pipefail
           docker compose --env-file .env.ci -f compose.yml pull
           for f in services/*/compose.yml; do
-            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" pull
+            env_file="$(dirname "$f")/.env.example"
+            if [ -f "$env_file" ]; then
+              docker compose --env-file "$env_file" -f "$f" pull
+            else
+              docker compose -f "$f" pull
+            fi
           done
 
       - name: Trivy image scan (SARIF per image)
@@ -83,7 +88,12 @@ jobs:
           mkdir -p trivy-results/images
           CORE_IMAGES=$(docker compose --env-file .env.ci -f compose.yml config | awk '/image:/ {print $2}')
           SVC_IMAGES=$(for f in services/*/compose.yml; do
-            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" config | awk '/image:/ {print $2}'
+            env_file="$(dirname "$f")/.env.example"
+            if [ -f "$env_file" ]; then
+              docker compose --env-file "$env_file" -f "$f" config | awk '/image:/ {print $2}'
+            else
+              docker compose -f "$f" config | awk '/image:/ {print $2}'
+            fi
           done)
           IMAGES=$(printf '%s\n%s\n' "$CORE_IMAGES" "$SVC_IMAGES" | sort -u)
           FAILED=0

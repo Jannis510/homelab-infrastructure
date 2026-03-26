@@ -55,12 +55,15 @@ jobs:
                           "must use 'expose:' only and route via Traefik"
                       )
 
-              # Rule 2: all top-level networks must be external (no standalone network definitions)
+              # Rule 2: all top-level networks must be external or internal
+              # external: attaches to a core stack network (proxy_net, dns_net, …)
+              # internal: isolated sidecar network within this service (e.g. socket proxy) — allowed
               for net_name, net_cfg in (data.get("networks") or {}).items():
-                  if not (net_cfg or {}).get("external"):
+                  cfg = net_cfg or {}
+                  if not cfg.get("external") and not cfg.get("internal"):
                       errors.append(
-                          f"{compose_file}: network '{net_name}' is not marked external — "
-                          "services must attach to core stack networks only"
+                          f"{compose_file}: network '{net_name}' is neither external nor internal — "
+                          "services must attach to core stack networks or declare isolated internal networks"
                       )
 
           if errors:
@@ -82,8 +85,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Services use proxy_net as an external network — create it for CI
+          # Services use core stack networks as external — create them for CI
           docker network create proxy_net
+          docker network create dns_net
 
           overall_status=0
 
@@ -135,5 +139,5 @@ jobs:
             compose_cmd down -v --remove-orphans
           done
 
-          docker network rm proxy_net || true
+          docker network rm proxy_net dns_net || true
           exit $overall_status

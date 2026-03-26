@@ -1,0 +1,11 @@
+---
+# CI-only user database — not used in production
+# Password hash generated with:
+#   docker run --rm authelia/authelia:4.39 authelia crypto hash generate argon2 --password '<ci-password>'
+users:
+  ci-admin:
+    displayname: "CI Admin"
+    password: "$argon2id$v=19$m=65536,t=3,p=4$KgtADPoyIKCj525i/zjYow$QhdIY6fVKkSqRdgdRogySH8uhP5i+thJDGDx5xSQ30g"
+    email: ci-admin@home.arpa
+    groups:
+      - admins

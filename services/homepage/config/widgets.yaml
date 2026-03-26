@@ -1,0 +1,12 @@
+---
+- greeting:
+    text_size: 2xl
+
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: long
+      timeStyle: short
+      hour12: false
+      locale: de-DE
+      timeZone: "{{HOMEPAGE_VAR_TZ}}"

@@ -64,6 +64,7 @@ wait_for_service_ready "unbound"
 wait_for_service_ready "pihole"
 wait_for_service_ready "stepca"
 wait_for_service_ready "traefik"
+wait_for_service_ready "authelia"
 
 # 2) stepca-export must have completed successfully
 stepca_export_id="$(compose ps -aq stepca-export)"
@@ -95,8 +96,8 @@ assert_not_empty "$unbound_external" "Unbound did not resolve example.com"
 # 7) Internal DNS record resolution
 dns_internal="$(docker run --rm --network "$NETWORK_NAME" \
   "$DNS_TOOL_IMAGE" \
-  sh -lc 'apk add --no-cache bind-tools >/dev/null && dig @pihole traefik.home.arpa +short | head -n1')"
-assert_not_empty "$dns_internal" "Pi-hole did not resolve traefik.home.arpa"
+  sh -lc 'apk add --no-cache bind-tools >/dev/null && dig @pihole traefik.app.home.arpa +short | head -n1')"
+assert_not_empty "$dns_internal" "Pi-hole did not resolve traefik.app.home.arpa"
 
 # 8) step-ca health endpoint
 stepca_health="$(compose exec -T stepca sh -lc 'wget --no-check-certificate -qO- https://localhost:9000/health' || true)"
@@ -110,13 +111,28 @@ if [ "$traefik_http_code" -lt 200 ] || [ "$traefik_http_code" -ge 500 ]; then
 fi
 
 # 10) Traefik file-provider routers must be loaded
-routers_json="$(curl -ksS --resolve traefik.home.arpa:443:127.0.0.1 \
-  -u "admin:${CI_SMOKE_PASSWORD}" \
-  https://traefik.home.arpa/api/http/routers || true)"
-assert_not_empty "$routers_json" "Traefik API routers endpoint is empty/unreachable"
-echo "$routers_json" | grep -q '"pihole@file"' || {
-  echo "ERROR: Traefik router 'pihole@file' not loaded." >&2
+# Verified end-to-end: if pihole.app.home.arpa returns any HTTP response,
+# Traefik has loaded the file provider and the pihole router is active.
+# (Step 12 additionally confirms the Authelia middleware is working.)
+pihole_status="$(curl -ksS -o /dev/null -w '%{http_code}' \
+  --resolve pihole.app.home.arpa:443:127.0.0.1 \
+  https://pihole.app.home.arpa/ || true)"
+if ! [[ "$pihole_status" =~ ^[2-4][0-9]{2}$ ]]; then
+  echo "ERROR: Traefik is not routing pihole.app.home.arpa (got '$pihole_status')" >&2
+  exit 1
+fi
+
+# 11) Authelia health endpoint
+authelia_health="$(curl -ksS \
+  --resolve auth.app.home.arpa:443:127.0.0.1 \
+  https://auth.app.home.arpa/api/health || true)"
+assert_not_empty "$authelia_health" "Authelia health endpoint returned no payload"
+
+# 12) SSO gate: protected route without auth must redirect to Authelia
+sso_redirect="$(curl -ksS -o /dev/null -w '%{redirect_url}' \
+  --resolve pihole.app.home.arpa:443:127.0.0.1 \
+  https://pihole.app.home.arpa/admin/ || true)"
+echo "$sso_redirect" | grep -q 'auth\.app\.home\.arpa' || {
+  echo "ERROR: pihole.app.home.arpa did not redirect to Authelia SSO (redirect_url='$sso_redirect')" >&2
   exit 1
 }
-
-

@@ -1,0 +1,17 @@
+---
+title: Homelab
+theme: dark
+color: slate
+headerStyle: clean
+useEqualHeights: true
+
+layout:
+  Netzwerk & Security:
+    style: row
+    columns: 3
+  Tools:
+    style: row
+    columns: 4
+  Links:
+    style: row
+    columns: 4

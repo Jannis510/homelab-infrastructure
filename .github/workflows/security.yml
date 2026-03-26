@@ -13,6 +13,7 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
+      - "services/**"
       - ".github/workflows/security.yml"
   push:
     branches: [main]
@@ -21,6 +22,7 @@ on:
       - "compose.ci.yml"
       - "config/**"
       - "scripts/**"
+      - "services/**"
       - ".github/workflows/security.yml"
   schedule:
     - cron: "0 6 * * 1"  # Monday 06:00 UTC
@@ -71,12 +73,19 @@ jobs:
         run: |
           set -euo pipefail
           docker compose --env-file .env.ci -f compose.yml pull
+          for f in services/*/compose.yml; do
+            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" pull
+          done
 
       - name: Trivy image scan (SARIF per image)
         run: |
           set -euo pipefail
           mkdir -p trivy-results/images
-          IMAGES=$(docker compose --env-file .env.ci -f compose.yml config | awk '/image:/ {print $2}' | sort -u)
+          CORE_IMAGES=$(docker compose --env-file .env.ci -f compose.yml config | awk '/image:/ {print $2}')
+          SVC_IMAGES=$(for f in services/*/compose.yml; do
+            docker compose --env-file "$(dirname "$f")/.env.example" -f "$f" config | awk '/image:/ {print $2}'
+          done)
+          IMAGES=$(printf '%s\n%s\n' "$CORE_IMAGES" "$SVC_IMAGES" | sort -u)
           FAILED=0
           for img in $IMAGES; do
             echo "=== Scanning $img ==="

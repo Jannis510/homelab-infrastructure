@@ -1,0 +1,18 @@
+http:
+  routers:
+    homepage:
+      rule: Host(`start.app.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - authelia@file
+        - secure-headers@file
+      service: homepage-svc
+
+  services:
+    homepage-svc:
+      loadBalancer:
+        servers:
+          - url: http://homepage:3000

@@ -1,0 +1,30 @@
+http:
+  routers:
+    authelia:
+      rule: Host(`auth.app.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      # No authelia middleware here — this IS the login portal
+      middlewares:
+        - secure-headers@file
+      service: authelia-svc
+
+  middlewares:
+    authelia:
+      forwardAuth:
+        address: "http://authelia:9091/api/authz/forward-auth"
+        trustForwardHeader: true
+        maxResponseBodySize: 4096
+        authResponseHeaders:
+          - "Remote-User"
+          - "Remote-Groups"
+          - "Remote-Name"
+          - "Remote-Email"
+
+  services:
+    authelia-svc:
+      loadBalancer:
+        servers:
+          - url: http://authelia:9091

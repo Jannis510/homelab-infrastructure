@@ -11,6 +11,7 @@ Workflows are located in:
 * `ci.yml`
 * `smoke.yml`
 * `security.yml`
+* `services.yml`
 
 ---
 
@@ -29,11 +30,15 @@ Workflows are located in:
 
 1. **Compose Validation**
 
+Validates the core stack and all optional service stacks. If a service has no `.env.example`, validation runs without an env file:
+
 ```bash
 docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml config >/dev/null
+for f in services/*/compose.yml; do
+  # uses .env.example if present, otherwise validates without env file
+  docker compose [-f .env.example] -f "$f" config >/dev/null
+done
 ```
-
-Ensures that the combined Compose configuration is syntactically valid and fully resolvable.
 
 2. **YAML Linting**
    Uses `ibiqlik/action-yamllint@v3` to enforce YAML formatting standards.
@@ -44,6 +49,7 @@ Ensures that the combined Compose configuration is syntactically valid and fully
 4. **Policy Checks**
 
 * Forbid floating `:latest` image tags
+* **All Traefik route files must include `authelia@file` middleware** — every file in `config/traefik/dynamic/` that defines routers must reference the Authelia ForwardAuth middleware. `authelia.yml` itself is excluded (it is the SSO portal).
 * Prevent `level: DEBUG` in `config/traefik/traefik.yml` on protected branches
 
 CI failures block merges if configuration validity or policy compliance is violated.
@@ -57,8 +63,10 @@ CI failures block merges if configuration validity or policy compliance is viola
 ### Triggers
 
 * `workflow_dispatch`
-* `pull_request` (infrastructure-related changes)
-* `push` to `main` (with path filters)
+* `pull_request` on changes to: `compose.yml`, `compose.ci.yml`, `config/**`, `scripts/**`
+* `push` to `main` on the same paths
+
+> `services/**` is intentionally excluded — optional services are not started in this test. They are validated separately by the Services workflow.
 
 ### Job: `smoke` (ubuntu-latest, 10-minute timeout)
 
@@ -67,7 +75,6 @@ CI failures block merges if configuration validity or policy compliance is viola
 1. **Prepare CI-only files and secrets**
 
 * `config/stepca/password.txt`
-* `config/traefik/usersfile`
 * Ensure `artifacts/pki/` exists
 
 2. **Start the stack**
@@ -95,16 +102,47 @@ docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml down -v --rem
 
 ### What Is Validated
 
-* Required Docker networks exist
-* Containers are running and healthy
+* Required Docker networks exist (`proxy_net`, `dns_net`)
+* All core containers are running and healthy — including **Authelia**
 * `stepca-export` completed successfully
 * DNS resolution via Pi-hole and Unbound
-* Internal DNS for `*.home.arpa`
+* Internal DNS for `*.app.home.arpa`
 * `step-ca` health endpoint responsiveness
 * Traefik HTTP responsiveness
-* Traefik router registration (pihole@file)
+* Traefik router registration (`pihole@file`)
+* **Authelia health endpoint** (`/api/health`) is reachable via HTTPS
+* **SSO gate** — accessing `pihole.app.home.arpa` without a session redirects to `auth.app.home.arpa`
 
 This ensures that the stack behaves correctly as an integrated system, not only at a syntactic level.
+
+---
+
+## Services (`services.yml`)
+
+**Purpose:** Validates optional services in `services/` for correctness and isolation from the core stack.
+
+### Triggers
+
+* `workflow_dispatch`
+* `pull_request` on changes to: `services/**`, `.github/workflows/services.yml`
+* `push` to `main` on the same paths
+
+### Job: `isolation-check` (ubuntu-latest)
+
+### Steps
+
+1. **Compose Validation**
+
+Each `services/*/compose.yml` is validated with `docker compose config`. Uses `.env.example` if present, otherwise validates without an env file.
+
+2. **Isolation Rules** (enforced via Python/PyYAML)
+
+| Rule | Rationale |
+|------|-----------|
+| No `ports:` — only `expose:` allowed | All traffic must route via Traefik |
+| All top-level `networks:` must have `external: true` | Services must attach to core stack networks, not define their own |
+
+Violations fail the workflow with an error per offending file and rule.
 
 ---
 

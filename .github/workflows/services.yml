@@ -2,6 +2,7 @@
 # Services workflow
 # - Validates each service's Docker Compose configuration
 # - Enforces isolation rules: no published ports, all networks must be external
+# - Boot-checks each service: starts containers and verifies they reach a running/healthy state
 # - Runs only when services/ changes — core stack smoke tests are separate
 name: Services
 
@@ -69,3 +70,70 @@ jobs:
 
           print("All services pass isolation checks.")
           EOF
+
+  boot-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: isolation-check
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot-check each service
+        run: |
+          set -euo pipefail
+
+          # Services use proxy_net as an external network — create it for CI
+          docker network create proxy_net
+
+          overall_status=0
+
+          for f in services/*/compose.yml; do
+            svc=$(dirname "$f" | xargs basename)
+            env_file="$(dirname "$f")/.env.example"
+            echo "=== Boot-check: $svc ==="
+
+            compose_cmd() {
+              if [ -f "$env_file" ]; then
+                docker compose --env-file "$env_file" -f "$f" "$@"
+              else
+                docker compose -f "$f" "$@"
+              fi
+            }
+
+            compose_cmd up -d
+
+            # Wait up to 60s for containers to leave 'created' state
+            elapsed=0
+            while [ "$elapsed" -lt 60 ]; do
+              sleep 2; elapsed=$((elapsed + 2))
+              still_starting=$(compose_cmd ps -q | xargs -r docker inspect --format '{{.State.Status}}' | grep -cE '^created$' || true)
+              [ "$still_starting" -eq 0 ] && break
+            done
+
+            # Assess final container states
+            svc_ok=1
+            while IFS= read -r cid; do
+              state=$(docker inspect -f '{{.State.Status}}' "$cid")
+              health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$cid")
+              name=$(docker inspect -f '{{.Name}}' "$cid" | tr -d '/')
+              if [ "$state" = "restarting" ] || [ "$state" = "dead" ]; then
+                echo "ERROR: '$name' is in state '$state'" >&2
+                svc_ok=0
+              elif [ "$health" = "unhealthy" ]; then
+                echo "ERROR: '$name' is unhealthy" >&2
+                svc_ok=0
+              fi
+            done < <(compose_cmd ps -q)
+
+            if [ "$svc_ok" -eq 1 ]; then
+              echo "$svc: OK"
+            else
+              compose_cmd logs --no-color
+              overall_status=1
+            fi
+
+            compose_cmd down -v --remove-orphans
+          done
+
+          docker network rm proxy_net || true
+          exit $overall_status

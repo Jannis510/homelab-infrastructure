@@ -15,6 +15,17 @@
         description: SSO & 2FA
         icon: authelia.png
 
+- Monitoring:
+    - Netdata:
+        href: https://netdata.app.home.arpa
+        description: System Monitoring
+        icon: netdata.png
+
+    - Uptime Kuma:
+        href: https://uptime-kuma.app.home.arpa
+        description: Uptime Monitoring
+        icon: uptime-kuma.png
+
 - Tools:
     - BentoPDF:
         href: https://bentopdf.app.home.arpa

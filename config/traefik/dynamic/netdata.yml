@@ -1,7 +1,7 @@
 http:
   routers:
-    homepage:
-      rule: Host(`homepage.app.home.arpa`)
+    netdata:
+      rule: Host(`netdata.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -9,10 +9,10 @@ http:
       middlewares:
         - authelia@file
         - secure-headers@file
-      service: homepage-svc
+      service: netdata-svc
 
   services:
-    homepage-svc:
+    netdata-svc:
       loadBalancer:
         servers:
-          - url: http://homepage:3000
+          - url: http://netdata:19999

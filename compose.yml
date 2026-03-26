@@ -51,7 +51,9 @@ services:
         ${SERVER_LOCAL_IP:-192.168.0.10} traefik.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} bentopdf.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} convertx.app.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} start.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} homepage.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} netdata.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} uptime-kuma.app.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -140,7 +142,9 @@ services:
       - "pihole.app.home.arpa:host-gateway"
       - "bentopdf.app.home.arpa:host-gateway"
       - "convertx.app.home.arpa:host-gateway"
-      - "start.app.home.arpa:host-gateway"
+      - "homepage.app.home.arpa:host-gateway"
+      - "netdata.app.home.arpa:host-gateway"
+      - "uptime-kuma.app.home.arpa:host-gateway"
 
   stepca-export:
     image: alpine:3.21

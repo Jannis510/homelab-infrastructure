@@ -23,6 +23,17 @@ http:
         - secure-headers
       service: api@internal
 
+    traefik-ping:
+      rule: Host(`traefik.app.home.arpa`) && Path(`/ping`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - secure-headers
+      service: ping@internal
+      priority: 10
+
   middlewares:
     pihole-redirect:
       redirectRegex:

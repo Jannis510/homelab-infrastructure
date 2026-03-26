@@ -1,0 +1,86 @@
+name: monitoring
+
+services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:v0.4.2
+    container_name: monitoring-socket-proxy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      CONTAINERS: 1
+      EVENTS: 1
+      IMAGES: 1
+      INFO: 1
+      NETWORKS: 1
+      VOLUMES: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket_proxy_net
+
+  glances:
+    image: nicolargo/glances:4.5.2-full
+    container_name: glances
+    restart: unless-stopped
+    pid: host
+    environment:
+      - GLANCES_OPT=-w
+      - DOCKER_HOST=tcp://socket-proxy:2375
+    volumes:
+      - /etc/os-release:/etc/os-release:ro
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - "61208"
+    networks:
+      - proxy_net
+      - socket_proxy_net
+    depends_on:
+      - socket-proxy
+
+  dozzle:
+    image: amir20/dozzle:v8.12.9
+    container_name: dozzle
+    restart: unless-stopped
+    environment:
+      DOZZLE_BASE: /
+      DOCKER_HOST: tcp://socket-proxy:2375
+    expose:
+      - "8080"
+    networks:
+      - proxy_net
+      - socket_proxy_net
+    depends_on:
+      - socket-proxy
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.2.1
+    container_name: uptime-kuma
+    restart: unless-stopped
+    environment:
+      - NODE_EXTRA_CA_CERTS=/certs/root_ca.crt
+    volumes:
+      - uptime-kuma:/app/data
+      - ../../artifacts/pki/root_ca.crt:/certs/root_ca.crt:ro
+    expose:
+      - "3001"
+    networks:
+      - proxy_net
+      - dns_net
+
+networks:
+  proxy_net:
+    external: true
+  dns_net:
+    external: true
+  socket_proxy_net:
+    internal: true
+
+volumes:
+  uptime-kuma:

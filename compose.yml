@@ -52,7 +52,8 @@ services:
         ${SERVER_LOCAL_IP:-192.168.0.10} bentopdf.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} convertx.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} homepage.app.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} netdata.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} glances.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} dozzle.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} uptime-kuma.app.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
@@ -143,7 +144,8 @@ services:
       - "bentopdf.app.home.arpa:host-gateway"
       - "convertx.app.home.arpa:host-gateway"
       - "homepage.app.home.arpa:host-gateway"
-      - "netdata.app.home.arpa:host-gateway"
+      - "glances.app.home.arpa:host-gateway"
+      - "dozzle.app.home.arpa:host-gateway"
       - "uptime-kuma.app.home.arpa:host-gateway"
 
   stepca-export:

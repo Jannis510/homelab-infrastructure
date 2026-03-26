@@ -16,10 +16,15 @@
         icon: authelia.png
 
 - Monitoring:
-    - Netdata:
-        href: https://netdata.app.home.arpa
+    - Glances:
+        href: https://glances.app.home.arpa
         description: System Monitoring
-        icon: netdata.png
+        icon: glances.png
+
+    - Dozzle:
+        href: https://dozzle.app.home.arpa
+        description: Container Logs
+        icon: dozzle.png
 
     - Uptime Kuma:
         href: https://uptime-kuma.app.home.arpa
@@ -30,7 +35,7 @@
     - BentoPDF:
         href: https://bentopdf.app.home.arpa
         description: PDF Tools
-        icon: stirling-pdf.png
+        icon: bentopdf.png
 
     - ConvertX:
         href: https://convertx.app.home.arpa

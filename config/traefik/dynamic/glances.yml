@@ -1,7 +1,7 @@
 http:
   routers:
-    netdata:
-      rule: Host(`netdata.app.home.arpa`)
+    glances:
+      rule: Host(`glances.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -9,10 +9,10 @@ http:
       middlewares:
         - authelia@file
         - secure-headers@file
-      service: netdata-svc
+      service: glances-svc
 
   services:
-    netdata-svc:
+    glances-svc:
       loadBalancer:
         servers:
-          - url: http://netdata:19999
+          - url: http://glances:61208

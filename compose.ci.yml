@@ -5,10 +5,3 @@ services:
     # Services communicate only via internal Docker networks.
     ports: !reset []
 
-  traefik:
-    # In CI, expose the Traefik insecure API on localhost so the smoke test
-    # can query routers without going through Authelia ForwardAuth.
-    environment:
-      TRAEFIK_API_INSECURE: "true"
-    ports:
-      - "127.0.0.1:8080:8080"

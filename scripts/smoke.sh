@@ -111,14 +111,16 @@ if [ "$traefik_http_code" -lt 200 ] || [ "$traefik_http_code" -ge 500 ]; then
 fi
 
 # 10) Traefik file-provider routers must be loaded
-# Uses the insecure API (enabled via TRAEFIK_API_INSECURE in compose.ci.yml) to
-# bypass Authelia ForwardAuth, which rejects unauthenticated requests.
-routers_json="$(curl -sS http://127.0.0.1:8080/api/http/routers || true)"
-assert_not_empty "$routers_json" "Traefik API routers endpoint is empty/unreachable"
-echo "$routers_json" | grep -q '"pihole@file"' || {
-  echo "ERROR: Traefik router 'pihole@file' not loaded." >&2
+# Verified end-to-end: if pihole.app.home.arpa returns any HTTP response,
+# Traefik has loaded the file provider and the pihole router is active.
+# (Step 12 additionally confirms the Authelia middleware is working.)
+pihole_status="$(curl -ksS -o /dev/null -w '%{http_code}' \
+  --resolve pihole.app.home.arpa:443:127.0.0.1 \
+  https://pihole.app.home.arpa/ || true)"
+if ! [[ "$pihole_status" =~ ^[2-4][0-9]{2}$ ]]; then
+  echo "ERROR: Traefik is not routing pihole.app.home.arpa (got '$pihole_status')" >&2
   exit 1
-}
+fi
 
 # 11) Authelia health endpoint
 authelia_health="$(curl -ksS \

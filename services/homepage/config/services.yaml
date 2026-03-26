@@ -1,0 +1,22 @@
+---
+- Netzwerk & Security:
+    - Pi-hole:
+        href: https://pihole.app.home.arpa
+        description: DNS & Ad Blocker
+        icon: pi-hole.png
+
+    - Traefik:
+        href: https://traefik.app.home.arpa
+        description: Reverse Proxy
+        icon: traefik.png
+
+    - Authelia:
+        href: https://auth.app.home.arpa
+        description: SSO & 2FA
+        icon: authelia.png
+
+- Tools:
+    - BentoPDF:
+        href: https://bentopdf.app.home.arpa
+        description: PDF-Werkzeuge
+        icon: stirling-pdf.png

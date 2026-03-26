@@ -1,0 +1,24 @@
+name: homepage
+
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:v1.11
+    container_name: homepage
+    # Access exclusively via Traefik — no published ports
+    networks:
+      - proxy_net
+    expose:
+      - "3000"
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: start.app.home.arpa
+      HOMEPAGE_VAR_TZ: "${TZ:-Europe/Berlin}"
+    tmpfs:
+      - /app/config/logs
+    volumes:
+      - ./config:/app/config
+    restart: unless-stopped
+
+networks:
+  proxy_net:
+    # Defined in the core stack (compose.yml) — must be running first
+    external: true

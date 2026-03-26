@@ -50,6 +50,7 @@ services:
         ${SERVER_LOCAL_IP:-192.168.0.10} pihole.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} traefik.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} bentopdf.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} start.app.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -141,6 +142,7 @@ services:
       - "auth.app.home.arpa:host-gateway"
       - "pihole.app.home.arpa:host-gateway"
       - "bentopdf.app.home.arpa:host-gateway"
+      - "start.app.home.arpa:host-gateway"
 
   stepca-export:
     image: alpine:3.21

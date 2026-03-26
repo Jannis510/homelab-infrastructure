@@ -1,0 +1,11 @@
+---
+- Links:
+    - GitHub:
+        - abbr: GH
+          icon: github.png
+          href: https://github.com
+
+    - Router Admin:
+        - abbr: RT
+          icon: mdi-router-network
+          href: http://192.168.50.1

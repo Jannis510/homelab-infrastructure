@@ -60,7 +60,7 @@ services:
       - socket-proxy
 
   uptime-kuma:
-    image: louislam/uptime-kuma:2.2.1
+    image: louislam/uptime-kuma:2.2.1-slim
     container_name: uptime-kuma
     restart: unless-stopped
     environment:

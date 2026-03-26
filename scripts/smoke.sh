@@ -96,8 +96,8 @@ assert_not_empty "$unbound_external" "Unbound did not resolve example.com"
 # 7) Internal DNS record resolution
 dns_internal="$(docker run --rm --network "$NETWORK_NAME" \
   "$DNS_TOOL_IMAGE" \
-  sh -lc 'apk add --no-cache bind-tools >/dev/null && dig @pihole traefik.home.arpa +short | head -n1')"
-assert_not_empty "$dns_internal" "Pi-hole did not resolve traefik.home.arpa"
+  sh -lc 'apk add --no-cache bind-tools >/dev/null && dig @pihole traefik.app.home.arpa +short | head -n1')"
+assert_not_empty "$dns_internal" "Pi-hole did not resolve traefik.app.home.arpa"
 
 # 8) step-ca health endpoint
 stepca_health="$(compose exec -T stepca sh -lc 'wget --no-check-certificate -qO- https://localhost:9000/health' || true)"

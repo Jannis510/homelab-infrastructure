@@ -1,7 +1,7 @@
 http:
   routers:
-    homepage:
-      rule: Host(`homepage.app.home.arpa`)
+    dozzle:
+      rule: Host(`dozzle.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -9,10 +9,10 @@ http:
       middlewares:
         - authelia@file
         - secure-headers@file
-      service: homepage-svc
+      service: dozzle-svc
 
   services:
-    homepage-svc:
+    dozzle-svc:
       loadBalancer:
         servers:
-          - url: http://homepage:3000
+          - url: http://dozzle:8080

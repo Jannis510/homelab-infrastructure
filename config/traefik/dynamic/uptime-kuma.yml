@@ -1,7 +1,7 @@
 http:
   routers:
-    homepage:
-      rule: Host(`homepage.app.home.arpa`)
+    uptime-kuma:
+      rule: Host(`uptime-kuma.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -9,10 +9,10 @@ http:
       middlewares:
         - authelia@file
         - secure-headers@file
-      service: homepage-svc
+      service: uptime-kuma-svc
 
   services:
-    homepage-svc:
+    uptime-kuma-svc:
       loadBalancer:
         servers:
-          - url: http://homepage:3000
+          - url: http://uptime-kuma:3001

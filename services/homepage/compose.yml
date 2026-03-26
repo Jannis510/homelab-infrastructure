@@ -10,7 +10,7 @@ services:
     expose:
       - "3000"
     environment:
-      HOMEPAGE_ALLOWED_HOSTS: start.app.home.arpa
+      HOMEPAGE_ALLOWED_HOSTS: homepage.app.home.arpa
       HOMEPAGE_VAR_TZ: "${TZ:-Europe/Berlin}"
     tmpfs:
       - /app/config/logs

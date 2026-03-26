@@ -1,0 +1,26 @@
+name: convertx
+
+services:
+  convertx:
+    image: ghcr.io/c4illin/convertx:v0.17.0
+    container_name: convertx
+    # Access exclusively via Traefik — no published ports
+    networks:
+      - proxy_net
+    expose:
+      - "3000"
+    restart: unless-stopped
+    environment:
+      - JWT_SECRET=${CONVERTX_JWT_SECRET}
+      - ACCOUNT_REGISTRATION=false
+      - ALLOW_UNAUTHENTICATED=true
+    volumes:
+      - convertx-data:/app/data
+
+networks:
+  proxy_net:
+    # Defined in the core stack (compose.yml) — must be running first
+    external: true
+
+volumes:
+  convertx-data:

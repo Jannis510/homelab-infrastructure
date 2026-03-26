@@ -40,7 +40,7 @@ jobs:
 
       - name: Start stack (CI mode)
         run: |
-          docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml up -d --build
+          docker compose --env-file .env.ci -f compose.yml -f compose.ci.yml --profile init up -d --build
 
       - name: Run smoke script
         env:

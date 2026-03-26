@@ -1,5 +1,5 @@
 ---
-- Netzwerk & Security:
+- Network & Security:
     - Pi-hole:
         href: https://pihole.app.home.arpa
         description: DNS & Ad Blocker
@@ -15,8 +15,29 @@
         description: SSO & 2FA
         icon: authelia.png
 
+- Monitoring:
+    - Glances:
+        href: https://glances.app.home.arpa
+        description: System Monitoring
+        icon: glances.png
+
+    - Dozzle:
+        href: https://dozzle.app.home.arpa
+        description: Container Logs
+        icon: dozzle.png
+
+    - Uptime Kuma:
+        href: https://uptime-kuma.app.home.arpa
+        description: Uptime Monitoring
+        icon: uptime-kuma.png
+
 - Tools:
     - BentoPDF:
         href: https://bentopdf.app.home.arpa
-        description: PDF-Werkzeuge
-        icon: stirling-pdf.png
+        description: PDF Tools
+        icon: bentopdf.png
+
+    - ConvertX:
+        href: https://convertx.app.home.arpa
+        description: File Conversion
+        icon: convertx.png

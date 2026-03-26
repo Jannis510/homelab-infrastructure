@@ -16,7 +16,11 @@
 <!-- Optional Services -->
 **Services** — optional, run independently behind the stack\
 [![BentoPDF](https://img.shields.io/badge/BentoPDF-PDF_Tools-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/alam00000/bentopdf)
+[![ConvertX](https://img.shields.io/badge/ConvertX-File_Converter-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/C4illin/ConvertX)
+[![Glances](https://img.shields.io/badge/Glances-System_Metrics-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/nicolargo/glances)
 [![Homepage](https://img.shields.io/badge/Homepage-Dashboard-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/gethomepage/homepage)
+[![Uptime Kuma](https://img.shields.io/badge/Uptime_Kuma-Monitoring-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/louislam/uptime-kuma)
+[![Dozzle](https://img.shields.io/badge/Dozzle-Container_Logs-2E3440?style=flat-square&labelColor=2E3440&color=5E81AC)](https://github.com/amir20/dozzle)
 
 Docker Compose-based homelab stack for private LAN use. Provides DNS resolution, HTTPS reverse proxy, internal PKI, and SSO for services under `*.app.home.arpa`. No public internet exposure — all access via LAN or VPN only.
 
@@ -96,10 +100,15 @@ docker run --rm authelia/authelia:4.39 authelia crypto hash generate argon2 --pa
 ### 4. Start
 
 ```bash
-docker compose up -d
+docker compose --profile init up -d
 ```
 
-Root CA artifacts are exported to `artifacts/pki/` on first start.
+The `--profile init` flag runs `stepca-export` once to write the Root CA bundle to `artifacts/pki/`.
+On all subsequent starts, omit the flag — the export is skipped and the existing artifacts are reused:
+
+```bash
+docker compose up -d
+```
 
 ### 5. Trust the Root CA
 
@@ -149,12 +158,16 @@ docker compose -f services/<name>/compose.yml up -d
 docker compose -f services/<name>/compose.yml down
 ```
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| BentoPDF | `https://bentopdf.app.home.arpa` | PDF tools |
-| Homepage | `https://start.app.home.arpa` | Dashboard |
+| Service | URL | Purpose | Compose |
+|---------|-----|---------|---------|
+| Glances | `https://glances.app.home.arpa` | System metrics | `services/monitoring/` |
+| Uptime Kuma | `https://uptime-kuma.app.home.arpa` | Service availability | `services/monitoring/` |
+| Dozzle | `https://dozzle.app.home.arpa` | Container logs | `services/monitoring/` |
+| Homepage | `https://homepage.app.home.arpa` | Dashboard | `services/homepage/` |
+| BentoPDF | `https://bentopdf.app.home.arpa` | PDF tools | `services/bentopdf/` |
+| ConvertX | `https://convertx.app.home.arpa` | File format converter | `services/convertx/` |
 
-→ [Adding or removing a service](docs/adding-a-service.md) · [Homepage configuration](docs/homepage.md)
+→ [Adding or removing a service](docs/adding-a-service.md) · [Homepage configuration](docs/homepage.md) · [Monitoring setup](docs/monitoring.md) · [Web tools](docs/tools.md)
 
 ---
 
@@ -179,6 +192,8 @@ GitHub Actions validates Compose configs, lints YAML and shell scripts, and scan
 | [GitHub Workflows](docs/github-workflows.md) | CI/CD pipeline details |
 | [Security Exceptions](docs/security-exceptions.md) | Accepted Trivy findings |
 | [Homepage](docs/homepage.md) | Dashboard configuration |
+| [Monitoring](docs/monitoring.md) | Uptime Kuma, Glances, Dozzle — setup and configuration |
+| [Web Tools](docs/tools.md) | BentoPDF and ConvertX |
 
 ---
 

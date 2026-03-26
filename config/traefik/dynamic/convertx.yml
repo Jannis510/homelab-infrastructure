@@ -1,7 +1,7 @@
 http:
   routers:
-    homepage:
-      rule: Host(`homepage.app.home.arpa`)
+    convertx:
+      rule: Host(`convertx.app.home.arpa`)
       entryPoints:
         - websecure
       tls:
@@ -9,10 +9,10 @@ http:
       middlewares:
         - authelia@file
         - secure-headers@file
-      service: homepage-svc
+      service: convertx-svc
 
   services:
-    homepage-svc:
+    convertx-svc:
       loadBalancer:
         servers:
-          - url: http://homepage:3000
+          - url: http://convertx:3000

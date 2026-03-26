@@ -19,8 +19,9 @@ Backend services are never exposed directly and are reachable only through Traef
 1. DNS clients query **Pi-hole** (`53/tcp`, `53/udp`).
 2. Pi-hole forwards external DNS lookups to **Unbound** (`5335/tcp`, internal only).
 3. HTTP(S) traffic enters through **Traefik** (`80/tcp`, `443/tcp`).
-4. Traefik requests TLS certificates from **step-ca** via ACME over the internal `pki_net`.
-5. Traefik routes requests to backend services (e.g., Pi-hole web UI on container port `80`).
+4. Traefik performs a **ForwardAuth** check against **Authelia** for every protected request.
+5. Traefik requests TLS certificates from **step-ca** via ACME over the internal `pki_net`.
+6. Traefik routes requests to backend services (e.g., Pi-hole web UI on container port `80`).
 
 ---
 
@@ -60,11 +61,13 @@ No direct exposure. No port forwarding should be configured on the router. Host 
 | Network | Services | Purpose |
 |---------|----------|---------|
 | `dns_net` | `pihole`, `unbound` | DNS resolver chain isolation |
-| `proxy_net` | `traefik`, `pihole`, optional services | HTTPS ingress and backend routing |
+| `proxy_net` | `traefik`, `authelia`, `pihole`, optional services | HTTPS ingress, ForwardAuth, backend routing |
 | `pki_net` | `stepca`, `stepca-export`, `traefik` | Internal PKI and ACME communication |
+| `socket_proxy_net` | `socket-proxy`, monitoring services | Docker socket access for monitoring stack |
 
 `pihole` is dual-homed (`dns_net` + `proxy_net`) to connect DNS resolution with web ingress.
 `traefik` is dual-homed (`proxy_net` + `pki_net`) to route traffic and request certificates via ACME.
+`socket_proxy_net` is internal-only — monitoring services access it alongside `proxy_net` but it is not reachable from any other network.
 
 ---
 
@@ -84,8 +87,9 @@ All services behind Traefik are protected by Authelia (ForwardAuth). Login porta
 
 1. **client_zone** — LAN and VPN clients
 2. **dns_net** — Resolver path, isolated DNS processing
-3. **proxy_net** — HTTPS ingress, backend service routing
+3. **proxy_net** — HTTPS ingress, ForwardAuth, backend service routing
 4. **pki_net** — ACME certificate issuance, internal PKI boundary
+5. **socket_proxy_net** — Docker socket proxy, isolated from all other networks
 
 Clear zone separation minimizes lateral movement and cross-service exposure.
 

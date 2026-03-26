@@ -40,9 +40,11 @@ Reuses existing volumes — CA remains unchanged, Pi-hole data persists.
 
 ```bash
 docker compose down -v
+rm -rf artifacts/pki/*
+docker compose --profile init up -d
 ```
 
-Removes containers **and** volumes. All services reinitialize from scratch on next start.
+Removes containers **and** volumes. `stepca-export` re-runs via `--profile init` to write fresh Root CA artifacts before Traefik starts.
 
 > **Warning:** step-ca generates a new Certificate Authority on reinit. Previously issued certificates
 > become untrusted and all clients must reinstall the new Root CA.
@@ -55,15 +57,19 @@ After `docker compose down -v`, remove stale artifacts before restarting:
 
 ```bash
 rm -rf artifacts/pki/*
-docker compose run --rm stepca-export
+docker compose --profile init up -d
 ```
 
+This runs `stepca-export` once (via the `init` profile) to write fresh artifacts, then starts all services.
 Fresh artifacts will be available at:
 
 ```
 artifacts/pki/roots.pem
 artifacts/pki/root_ca.crt
 ```
+
+> **Note:** On all subsequent starts, use `docker compose up -d` without `--profile init`.
+> The export service is skipped and the artifacts on disk are reused.
 
 ---
 

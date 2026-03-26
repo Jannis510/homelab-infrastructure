@@ -50,7 +50,11 @@ services:
         ${SERVER_LOCAL_IP:-192.168.0.10} pihole.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} traefik.app.home.arpa
         ${SERVER_LOCAL_IP:-192.168.0.10} bentopdf.app.home.arpa
-        ${SERVER_LOCAL_IP:-192.168.0.10} start.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} convertx.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} homepage.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} glances.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} dozzle.app.home.arpa
+        ${SERVER_LOCAL_IP:-192.168.0.10} uptime-kuma.app.home.arpa
     volumes:
       - pihole-etc:/etc/pihole
       - pihole-dnsmasq:/etc/dnsmasq.d
@@ -87,10 +91,6 @@ services:
   traefik:
     image: traefik:v3.6.11
     container_name: traefik
-    # Wait for Root CA export before starting ACME resolver
-    depends_on:
-      stepca-export:
-        condition: service_completed_successfully
     # Single HTTPS ingress entrypoint
     networks:
       - pki_net
@@ -142,11 +142,18 @@ services:
       - "auth.app.home.arpa:host-gateway"
       - "pihole.app.home.arpa:host-gateway"
       - "bentopdf.app.home.arpa:host-gateway"
-      - "start.app.home.arpa:host-gateway"
+      - "convertx.app.home.arpa:host-gateway"
+      - "homepage.app.home.arpa:host-gateway"
+      - "glances.app.home.arpa:host-gateway"
+      - "dozzle.app.home.arpa:host-gateway"
+      - "uptime-kuma.app.home.arpa:host-gateway"
 
   stepca-export:
     image: alpine:3.21
-    # One-shot job to export Root CA bundle after initialization
+    # One-shot job to export Root CA bundle after initialization.
+    # Gated behind the "init" profile — only runs on first start or after a hard reset.
+    # Normal `docker compose up -d` skips this service; artifacts persist on disk.
+    profiles: ["init"]
     depends_on:
       - stepca
     networks:

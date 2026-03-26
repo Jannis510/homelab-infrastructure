@@ -6,7 +6,7 @@ headerStyle: clean
 useEqualHeights: true
 
 layout:
-  Netzwerk & Security:
+  Network & Security:
     style: row
     columns: 3
   Tools:

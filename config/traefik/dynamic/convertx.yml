@@ -1,0 +1,18 @@
+http:
+  routers:
+    convertx:
+      rule: Host(`convertx.app.home.arpa`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: stepca
+      middlewares:
+        - authelia@file
+        - secure-headers@file
+      service: convertx-svc
+
+  services:
+    convertx-svc:
+      loadBalancer:
+        servers:
+          - url: http://convertx:3000

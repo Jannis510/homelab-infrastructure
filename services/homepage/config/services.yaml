@@ -1,5 +1,5 @@
 ---
-- Netzwerk & Security:
+- Network & Security:
     - Pi-hole:
         href: https://pihole.app.home.arpa
         description: DNS & Ad Blocker
@@ -18,5 +18,10 @@
 - Tools:
     - BentoPDF:
         href: https://bentopdf.app.home.arpa
-        description: PDF-Werkzeuge
+        description: PDF Tools
         icon: stirling-pdf.png
+
+    - ConvertX:
+        href: https://convertx.app.home.arpa
+        description: File Conversion
+        icon: convertx.png

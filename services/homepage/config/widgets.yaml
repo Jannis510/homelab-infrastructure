@@ -8,5 +8,5 @@
       dateStyle: long
       timeStyle: short
       hour12: false
-      locale: de-DE
+      locale: en-US
       timeZone: "{{HOMEPAGE_VAR_TZ}}"

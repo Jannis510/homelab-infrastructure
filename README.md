@@ -96,10 +96,15 @@ docker run --rm authelia/authelia:4.39 authelia crypto hash generate argon2 --pa
 ### 4. Start
 
 ```bash
-docker compose up -d
+docker compose --profile init up -d
 ```
 
-Root CA artifacts are exported to `artifacts/pki/` on first start.
+The `--profile init` flag runs `stepca-export` once to write the Root CA bundle to `artifacts/pki/`.
+On all subsequent starts, omit the flag — the export is skipped and the existing artifacts are reused:
+
+```bash
+docker compose up -d
+```
 
 ### 5. Trust the Root CA
 
